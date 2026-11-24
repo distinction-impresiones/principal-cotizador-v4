@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotizador Oficial — DISTINCTION IMPRESIONES</title>
+  <!-- Librerías: PDF.js (detección páginas), jsPDF (generador PDF escala real) y Firebase -->
+  <script src="https://cloudflare.com"></script>
+  <script src="https://cloudflare.com"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+  <style>
+    :root {
+      --bg-main: #0b1120;
+      --bg-card: #111827;
+      --bg-card-alt: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: var(--bg-main); color: var(--text); min-height: 100vh; padding-bottom: 40px; }
+
+    /* Encabezado Recepción */
+    .hero-header {
+      background: linear-gradient(180deg, #111827 0%, #0b1120 100%);
+      border-bottom: 1px solid var(--border); padding: 24px 16px; text-align: center;
+    }
+    .logo-3d {
+      width: 74px; height: 74px; border-radius: 50%; margin: 0 auto 12px;
+      background: radial-gradient(circle at 30% 30%, #334155, #0f172a);
+      border: 3px solid #cbd5e1; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 14px; color: #f8fafc; box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+    .logo-3d img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-header h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.6px; }
+    .hero-header .welcome { color: #60a5fa; font-weight: 700; font-size: 15px; margin-top: 4px; }
+    .hero-header .loc { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .closed-banner {
+      max-width: 780px; margin: 14px auto 0; background: rgba(245,158,11,0.15);
+      border: 1px solid #f59e0b; color: #fde68a; padding: 10px 14px; border-radius: 10px;
+      font-size: 13px; display: none;
+    }
+
+    .container { max-width: 820px; margin: 20px auto; padding: 0 16px; }
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Tarjetas Menú Principal */
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 16px; }
+    .menu-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 22px 18px; text-align: center; cursor: pointer; transition: 0.2s;
+    }
+    .menu-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 25px rgba(37,99,235,0.2); }
+    .menu-icon { font-size: 36px; margin-bottom: 10px; display: block; }
+    .menu-card h3 { font-size: 16px; margin-bottom: 6px; }
+    .menu-card p { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+    .banner-extensos {
+      margin-top: 18px; background: linear-gradient(135deg, #1e1b4b 0%, #111827 100%);
+      border: 1px solid #6366f1; border-radius: 16px; padding: 20px; cursor: pointer;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
+      transition: 0.2s;
+    }
+    .banner-extensos:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(99,102,241,0.25); }
+    .price-pill {
+      background: #10b981; color: #052e16; font-weight: 800; padding: 6px 14px;
+      border-radius: 999px; font-size: 13px; white-space: nowrap;
+    }
+
+    /* Paneles Internos y Formularios */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px; margin-bottom: 14px;
+    }
+    .card h3 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-card-alt); color: var(--text); font-size: 14px; outline: none; margin-bottom: 10px;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+    /* Botones y Opciones Tipo Pill */
+    .btn {
+      padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-card-alt); color: var(--text); font-size: 13px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      transition: 0.15s;
+    }
+    .btn:hover { opacity: 0.92; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn-success { background: var(--success); border-color: var(--success); color: #fff; }
+    .btn-purple { background: var(--purple); border-color: var(--purple); color: #fff; }
+    .btn-back { margin-bottom: 14px; background: transparent; }
+
+    .opt-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .opt-btn {
+      flex: 1; min-width: 120px; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg-card-alt); color: var(--text);
+      font-size: 13px; font-weight: 600; cursor: pointer; text-align: center;
+    }
+    .opt-btn.active { background: rgba(37,99,235,0.25); border-color: #3b82f6; color: #93c5fd; }
+
+    .alert-info {
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.4);
+      color: #bfdbfe; padding: 11px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 12px;
+    }
+    .alert-warn {
+      background: rgba(245,158,11,0.14); border: 1px solid #f59e0b;
+      color: #fde68a; padding: 11px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 12px;
+    }
+    .total-box {
+      background: #0f172a; border: 1px solid #334155; border-radius: 12px;
+      padding: 16px; display: flex; justify-content: space-between; align-items: center; margin: 14px 0;
+    }
+    .total-amount { font-size: 24px; font-weight: 800; color: #34d399; }
+    .preview-canvas-wrap {
+      background: #090d16; border: 1px dashed var(--border); border-radius: 10px;
+      padding: 12px; text-align: center; margin-top: 10px; overflow-x: auto;
+    }
+    canvas.sheet-preview { max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.6); }
+
+    /* Pantalla Intro / Splash Screen con Logo 3D */
+    #splashScreen {
+      position: fixed; inset: 0; background: radial-gradient(circle at center, #111827 0%, #060911 100%);
+      z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 20px; transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #splashScreen.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    .splash-logo {
+      width: 105px; height: 105px; border-radius: 50%; margin-bottom: 16px;
+      background: radial-gradient(circle at 30% 30%, #334155, #0f172a);
+      border: 4px solid #cbd5e1; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; color: #f8fafc;
+      box-shadow: 0 0 35px rgba(59,130,246,0.45); overflow: hidden;
+      animation: pulseIntro 1.4s ease-in-out infinite alternate;
+    }
+    .splash-logo img { width: 100%; height: 100%; object-fit: cover; }
+    @keyframes pulseIntro { from { transform: scale(0.96); } to { transform: scale(1.04); } }
+ 
+ </style>
+</head>
+<body>
+
+  <!-- INTRO / SPLASH SCREEN ANIMADO -->
+  <div id="splashScreen">
+    <div class="splash-logo" id="splashLogo">Logo</div>
+    <h2 style="font-size:20px; letter-spacing:1px; color:#f8fafc;" id="splashTitle">DISTINCTION IMPRESIONES</h2>
+    <p style="font-size:13px; color:#60a5fa; margin-top:6px;" id="splashSub">Calidad y rapidez en cada página...</p>
+  </div>
+
+  <!-- ENCABEZADO DE RECEPCIÓN -->
+  <div class="hero-header">
+    <div class="logo-3d" id="pubLogo">Logo</div>
+    <h1 id="pubBrandName">DISTINCTION IMPRESIONES</h1>
+    <div class="welcome">Bienvenidos</div>
+    <div class="loc" id="pubLocation">Villahermosa, Tabasco</div>
+    <div class="closed-banner" id="closedShopBanner">
+      🌙 <strong>Nuestro taller está cerrado en este momento</strong>, pero puedes enviar tu pedido normalmente y lo atenderemos a primera hora.
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ========================================================= -->
+    <!-- VISTA 0: MENÚ PRINCIPAL (¿QUÉ DESEA COTIZAR?)             -->
+    <!-- ========================================================= -->
+    <div id="viewHome" class="view-section active">
+      <h2 style="text-align:center; font-size:18px; margin-bottom:6px;">¿Qué desea cotizar?</h2>
+      <p style="text-align:center; font-size:13px; color:var(--muted);">Selecciona una opción para calcular tu pedido al instante</p>
+
+      <div class="menu-grid">
+        <div class="menu-card" onclick="openView('viewCobatab')">
+          <span class="menu-icon">📚</span>
+          <h3>Libros COBATAB</h3>
+          <p>Paquetes y materias por semestre, capacitación y serie escolar.</p>
+        </div>
+
+        <div class="menu-card" onclick="openView('viewDocsImgs')">
+          <span class="menu-icon">📄</span>
+          <h3>Documentos / Imágenes</h3>
+          <p>Archivos PDF, tareas, trámites actualizados e impresión de fotos.</p>
+        </div>
+
+        <div class="menu-card" onclick="openView('viewStickers')">
+          <span class="menu-icon">🏷️</span>
+          <h3>Stickers / Tabloides</h3>
+          <p>Etiquetas personalizadas en papel fotográfico o adhesivo con acomodo automático.</p>
+        </div>
+      </div>
+
+      <!-- BANNER DESTACADO 4ª SECCIÓN: TRABAJOS EXTENSOS / LIBROS -->
+      <div class="banner-extensos" onclick="openView('viewExtensos')">
+        <div style="flex:1; min-width:220px;">
+          <h3 style="font-size:16px; color:#c7d2fe; margin-bottom:4px;">📖 Trabajos Extensos / Libros PDF</h3>
+          <p style="font-size:13px; color:#cbd5e1;">¿Necesitas imprimir un libro, varios libros o un trabajo de muchas páginas? ¡Aquí puedes cotizar!</p>
+        </div>
+        <span class="price-pill">Desde $0.30 / pág.</span>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- VISTA 1: LIBROS COBATAB                                   -->
+    <!-- ========================================================= -->
+    <div id="viewCobatab" class="view-section">
+      <button class="btn btn-back" onclick="openView('viewHome')">⬅ Volver al Menú Principal</button>
+      <div class="card">
+        <h3>📚 Cotizador de Libros COBATAB</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label>Semestre:</label>
+            <select id="cobSemestre" onchange="renderCobatabBooks()">
+              <option value="1">1er Semestre</option>
+              <option value="2">2do Semestre</option>
+              <option value="3">3er Semestre</option>
+              <option value="4">4to Semestre</option>
+              <option value="5">5to Semestre</option>
+              <option value="6">6to Semestre</option>
+            </select>
+          </div>
+          <div>
+            <label>Grupo (opcional):</label>
+            <input type="text" id="cobGrupo" placeholder="Ej. A, B, C...">
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="btn" style="flex:1;" onclick="toggleAllCobatab(true)">☑️ Marcar Todos</button>
+          <button class="btn" style="flex:1;" onclick="toggleAllCobatab(false)">⬜ Desmarcar</button>
+        </div>
+        <div id="cobBooksList"></div>
+        <div class="total-box">
+          <span>Total Libros Seleccionados:</span>
+          <span class="total-amount" id="cobTotal">$0.00</span>
+        </div>
+        <button class="btn btn-primary" style="width:100%; padding:13px;" onclick="prepareCheckout('COBATAB')">Continuar con mi Pedido ➡️</button>
+      </div>
+    </div>
+    <!-- ========================================================= -->
+    <!-- VISTA 2: DOCUMENTOS / IMÁGENES                            -->
+    <!-- ========================================================= -->
+    <div id="viewDocsImgs" class="view-section">
+      <button class="btn btn-back" onclick="openView('viewHome')">⬅ Volver al Menú Principal</button>
+
+      <div class="card">
+        <h3>¿Qué desea imprimir?</h3>
+        <div class="opt-group">
+          <div class="opt-btn active" id="btnSubDoc" onclick="switchSubDocImg('DOC')">📄 Documentos</div>
+          <div class="opt-btn" id="btnSubImg" onclick="switchSubDocImg('IMG')">🖼️ Imágenes</div>
+        </div>
+      </div>
+
+      <!-- RAMA 2.1: DOCUMENTOS -->
+      <div id="panelRamaDoc">
+        <div class="card">
+          <h3>Selecciona el tipo de servicio</h3>
+          <div class="opt-group">
+            <div class="opt-btn active" id="btnDocArchivos" onclick="switchDocMode('ARCHIVOS')">📁 Archivos / Tareas / Documentos</div>
+            <div class="opt-btn" id="btnDocTramites" onclick="switchDocMode('TRAMITES')">🪪 Trámites y Actualizaciones</div>
+          </div>
+        </div>
+
+        <!-- MODO A: ARCHIVOS / TAREAS / DOCUMENTOS (SOLO PDF) -->
+        <div id="subDocArchivos" class="card">
+          <h3>📁 Imprimir Archivos / Tareas / Documentos</h3>
+          <div class="alert-info">
+            📄 Sube tu archivo en formato <strong>PDF</strong> para detectar tus páginas automáticamente y asegurar que no se mueva ningún margen al imprimir.
+          </div>
+          <label>Cargar archivo PDF:</label>
+          <input type="file" id="docPdfInput" accept=".pdf" onchange="handleDocPdfUpload(event)">
+          <div id="docPdfInfo" style="font-size:13px; color:#34d399; font-weight:600; margin-bottom:10px;"></div>
+
+          <label>Tamaño de hoja:</label>
+          <div class="opt-group" id="docSizeGroup">
+            <div class="opt-btn active" onclick="selectOpt('docSize', 'Carta', this)">Tamaño Carta</div>
+            <div class="opt-btn" onclick="selectOpt('docSize', 'Oficio', this)">Tamaño Oficio</div>
+          </div>
+
+          <label>Impresión por hoja:</label>
+          <div class="opt-group" id="docSidesGroup">
+            <div class="opt-btn active" onclick="selectOpt('docSides', 'Una cara', this)">Una cara por hoja</div>
+            <div class="opt-btn" onclick="selectOpt('docSides', 'Doble cara', this)">Doble cara (lado y lado)</div>
+          </div>
+
+          <label>Modo de color:</label>
+          <div class="opt-group" id="docColorGroup">
+            <div class="opt-btn active" onclick="selectOpt('docColor', 'BN', this)">⚫ Todo Blanco y Negro</div>
+            <div class="opt-btn" onclick="selectOpt('docColor', 'COLOR', this)">🎨 Todo a Color</div>
+            <div class="opt-btn" onclick="selectOpt('docColor', 'MIXTO', this)">🌓 Mixto (Color y B&amp;N)</div>
+          </div>
+
+          <div id="docMixtoNote" class="alert-warn" style="display:none;">
+            💡 <strong>Cotización Justa:</strong> Para no cobrarte de más con tarifas fijas altas, revisaremos la cantidad real de color en cada página de tu archivo y te daremos el precio más justo posible por WhatsApp.
+          </div>
+
+          <label>¿Deseas engargolado para tu documento?</label>
+          <div class="opt-group" id="docBindGroup">
+            <div class="opt-btn active" onclick="selectOpt('docBind', 'NO', this)">No (Hojas sueltas)</div>
+            <div class="opt-btn" onclick="selectOpt('docBind', 'SI', this)">📎 Sí, engargolar</div>
+          </div>
+
+          <div class="total-box">
+            <span id="docTotalLabel">Total Estimado:</span>
+            <span class="total-amount" id="docTotalAmount">$0.00</span>
+          </div>
+          <button class="btn btn-primary" style="width:100%; padding:13px;" id="docActionBtn" onclick="prepareCheckout('DOCUMENTO')">Continuar con mi Pedido ➡️</button>
+        </div>
+
+        <!-- MODO B: TRÁMITES Y ACTUALIZACIONES -->
+        <div id="subDocTramites" class="card" style="display:none;">
+          <h3>🪪 Trámites y Actualizaciones</h3>
+          <div class="alert-info">
+            ¿Necesitas actualizar o descargar tus documentos oficiales? Nosotros lo hacemos por ti y te lo entregamos listo.
+          </div>
+          <label>Selecciona el trámite que necesitas:</label>
+          <div id="tramitesPublicList" class="opt-group" style="flex-direction:column;"></div>
+
+          <div id="tramiteFormBox" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+            <p style="font-size:13px; color:#fde68a; margin-bottom:10px;">
+              📎 Sube una foto o PDF de tu documento anterior (o escribe tus datos / CURP aquí abajo) para localizarlo y actualizarlo:
+            </p>
+            <label>Subir foto o PDF anterior (opcional):</label>
+            <input type="file" id="tramiteFileInput" accept=".pdf,image/*">
+            <label>Datos o CURP para búsqueda:</label>
+            <textarea id="tramiteNotes" rows="2" placeholder="Escribe tu CURP, nombre completo o datos del recibo..."></textarea>
+            <button class="btn btn-purple" style="width:100%; padding:13px;" onclick="prepareCheckout('TRAMITE')">Solicitar Actualización ➡️</button>
+          </div>
+        </div>
+      </div>
+      <!-- RAMA 2.2: IMÁGENES -->
+      <div id="panelRamaImg" class="card" style="display:none;">
+        <h3>🖼️ Imprimir Imágenes / Fotos</h3>
+        <label>Carga tu imagen o imágenes (o un PDF ya armado):</label>
+        <input type="file" id="imgFilesInput" accept="image/*,.pdf" multiple onchange="handleImgSectionUpload(event)">
+        <div id="imgQualityWarn" class="alert-warn" style="display:none;">
+          ⚠️ Una o más imágenes tienen baja resolución y podrían verse un poco pixeladas al imprimirse grandes.
+        </div>
+
+        <div id="imgControlsWrap">
+          <label>Tamaño de hoja:</label>
+          <div class="opt-group" id="imgSizeGroup">
+            <div class="opt-btn active" onclick="setImgSize('Carta', this)">Tamaño Carta</div>
+            <div class="opt-btn" onclick="setImgSize('Oficio', this)">Tamaño Oficio</div>
+          </div>
+
+          <div id="imgPaperRow">
+            <label>Tipo de papel:</label>
+            <div class="opt-group" id="imgPaperGroup">
+              <div class="opt-btn active" onclick="selectOpt('imgPaper', 'Normal', this)">Papel Normal</div>
+              <div class="opt-btn" onclick="selectOpt('imgPaper', 'Fotografico', this)">Papel Fotográfico</div>
+            </div>
+          </div>
+
+          <label>Medidas de las imágenes:</label>
+          <div class="opt-group" id="imgPresetGroup">
+            <div class="opt-btn active" onclick="setImgPreset(3, 3, this)">3 × 3 cm</div>
+            <div class="opt-btn" onclick="setImgPreset(5, 5, this)">5 × 5 cm</div>
+            <div class="opt-btn" onclick="setImgPreset(3, 5, this)">3 × 5 cm</div>
+            <div class="opt-btn" onclick="setImgPreset(0, 0, this)">Personalizado</div>
+          </div>
+
+          <div id="imgCustomDims" style="display:none; grid-template-columns:1fr 1fr; gap:10px;">
+            <div><label>Ancho (cm):</label><input type="number" step="0.1" id="imgCustomW" value="4" oninput="recalcImgLayout()"></div>
+            <div><label>Alto (cm):</label><input type="number" step="0.1" id="imgCustomH" value="4" oninput="recalcImgLayout()"></div>
+          </div>
+
+          <label>Color:</label>
+          <div class="opt-group" id="imgColorGroup">
+            <div class="opt-btn active" onclick="selectOpt('imgColor', 'COLOR', this)">🎨 A Color</div>
+            <div class="opt-btn" onclick="selectOpt('imgColor', 'BN', this)">⚫ Blanco y Negro</div>
+          </div>
+
+          <label>¿Desea que se repita alguna imagen?</label>
+          <div class="opt-group" id="imgRepeatGroup">
+            <div class="opt-btn active" onclick="toggleImgRepeat(false, this)">No</div>
+            <div class="opt-btn" onclick="toggleImgRepeat(true, this)">Sí, elegir copias</div>
+          </div>
+          <div id="imgRepeatList" style="display:none; margin-bottom:12px;"></div>
+
+          <div class="preview-canvas-wrap">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:6px;" id="imgPreviewStats">Vista previa en vivo (separación 5 mm)</div>
+            <canvas id="imgPreviewCanvas" class="sheet-preview" width="320" height="414"></canvas>
+          </div>
+        </div>
+
+        <div class="total-box">
+          <span id="imgSheetsLabel">Total (0 hojas):</span>
+          <span class="total-amount" id="imgTotalAmount">$0.00</span>
+        </div>
+        <button class="btn btn-primary" style="width:100%; padding:13px;" onclick="prepareCheckout('IMAGEN')">Continuar con mi Pedido ➡️</button>
+      </div>
+    </div> <!-- Fin viewDocsImgs -->
+    <!-- ========================================================= -->
+    <!-- VISTA 3: STICKERS / TABLOIDES                             -->
+    <!-- ========================================================= -->
+    <div id="viewStickers" class="view-section">
+      <button class="btn btn-back" onclick="openView('viewHome')">⬅ Volver al Menú Principal</button>
+      <div class="card">
+        <h3>🏷️ Stickers / Tabloides Personalizados</h3>
+        <label>Carga tu sticker o imagen (o un PDF ya armado):</label>
+        <input type="file" id="stkFilesInput" accept="image/*,.pdf" multiple onchange="handleStkSectionUpload(event)">
+        <div id="stkQualityWarn" class="alert-warn" style="display:none;">
+          ⚠️ Una o más imágenes tienen baja resolución y podrían verse pixeladas al imprimirse grandes.
+        </div>
+
+        <div id="stkQtyContainer" style="margin-bottom:12px;"></div>
+
+        <div id="stkControlsWrap">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div><label>Ancho del sticker (cm):</label><input type="number" step="0.1" id="stkW" value="5" oninput="recalcStkLayout()"></div>
+            <div><label>Alto del sticker (cm):</label><input type="number" step="0.1" id="stkH" value="5" oninput="recalcStkLayout()"></div>
+          </div>
+
+          <label>Tamaño de hoja / planilla:</label>
+          <div class="opt-group" id="stkSizeGroup">
+            <div class="opt-btn active" onclick="selectOpt('stkSize', 'Carta', this)">Tamaño Carta</div>
+            <div class="opt-btn" onclick="selectOpt('stkSize', 'Tabloide', this)">Tabloide (27.9 × 43.1 cm)</div>
+          </div>
+
+          <label>Tipo de papel:</label>
+          <div class="opt-group" id="stkPaperGroup">
+            <div class="opt-btn active" onclick="selectOpt('stkPaper', 'Fotografico', this)">Papel Fotográfico</div>
+            <div class="opt-btn" onclick="selectOpt('stkPaper', 'Adhesivo', this)">Papel Fotográfico Adhesivo</div>
+          </div>
+
+          <label>Contorno / Corte:</label>
+          <div class="opt-group" id="stkShapeGroup">
+            <div class="opt-btn active" onclick="selectOpt('stkShape', 'Cuadrado', this)">⬜ Cuadrado / Rect.</div>
+            <div class="opt-btn" onclick="selectOpt('stkShape', 'Circular', this)">⚪ Circular</div>
+            <div class="opt-btn" onclick="selectOpt('stkShape', 'Silueta', this)">✂️ Silueta</div>
+          </div>
+
+          <div id="stkUpsellBox" class="alert-info" style="display:none; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <span id="stkUpsellText">💡 ¡Aprovecha tu hoja! Todavía te caben stickers extra sin costo adicional.</span>
+            <button class="btn btn-success" style="padding:6px 12px; font-size:12px;" onclick="fillEmptyStickerSlots()">✨ Rellenar Espacios</button>
+          </div>
+
+          <div class="preview-canvas-wrap">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:6px;" id="stkPreviewStats">Vista previa planilla (separación 5 mm)</div>
+            <canvas id="stkPreviewCanvas" class="sheet-preview" width="320" height="414"></canvas>
+          </div>
+        </div>
+
+        <div class="total-box">
+          <span id="stkSheetsLabel">Total (0 hojas):</span>
+          <span class="total-amount" id="stkTotalAmount">$0.00</span>
+        </div>
+        <button class="btn btn-primary" style="width:100%; padding:13px;" onclick="prepareCheckout('STICKER')">Continuar con mi Pedido ➡️</button>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- VISTA 4: TRABAJOS EXTENSOS / LIBROS PDF                   -->
+    <!-- ========================================================= -->
+    <div id="viewExtensos" class="view-section">
+      <button class="btn btn-back" onclick="openView('viewHome')">⬅ Volver al Menú Principal</button>
+      <div class="card">
+        <h3>📖 Trabajos Extensos / Libros PDF (Desde $0.30/pág.)</h3>
+        <div class="alert-info">
+          📄 Sube 1 o varios archivos <strong>PDF</strong>. Sumaremos todas las páginas para darte el mejor precio por volumen.
+        </div>
+        <label>Cargar archivos PDF (puedes seleccionar varios a la vez):</label>
+        <input type="file" id="extPdfInput" accept=".pdf" multiple onchange="handleExtPdfsUpload(event)">
+        <div id="extFilesList" style="margin-bottom:12px;"></div>
+        <div id="extProgressBanner" class="alert-warn" style="display:none;"></div>
+
+        <label>Impresión por hoja:</label>
+        <div class="opt-group" id="extSidesGroup">
+          <div class="opt-btn active" onclick="selectOpt('extSides', 'Una cara', this)">Una cara por hoja</div>
+          <div class="opt-btn" onclick="selectOpt('extSides', 'Doble cara', this)">Doble cara (lado y lado)</div>
+        </div>
+
+        <label>Color:</label>
+        <div class="opt-group" id="extColorGroup">
+          <div class="opt-btn active" onclick="selectOpt('extColor', 'BN', this)">⚫ Blanco y Negro</div>
+          <div class="opt-btn" onclick="selectOpt('extColor', 'COLOR', this)">🎨 A Color</div>
+        </div>
+
+        <label>¿Deseas engargolado para tus trabajos?</label>
+        <div class="opt-group" id="extBindGroup">
+          <div class="opt-btn active" onclick="selectOpt('extBind', 'NO', this)">No (Hojas sueltas)</div>
+          <div class="opt-btn" onclick="selectOpt('extBind', 'SI', this)">📎 Sí, engargolar cada archivo</div>
+        </div>
+        <div id="extBindBreakdown" style="font-size:12px; color:#fde68a; margin-bottom:10px;"></div>
+
+        <div class="total-box">
+          <div>
+            <div style="font-size:12px; color:var(--muted);" id="extRateInfo">Tarifa aplicada: —</div>
+            <strong>Total del Pedido:</strong>
+          </div>
+          <span class="total-amount" id="extTotalAmount">$0.00</span>
+        </div>
+        <button class="btn btn-primary" style="width:100%; padding:13px;" onclick="prepareCheckout('EXTENSO')">Continuar con mi Pedido ➡️</button>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- VISTA 5: CIERRE DE PEDIDO (IDENTIFICACIÓN Y ENTREGA)      -->
+    <!-- ========================================================= -->
+    <div id="viewCheckout" class="view-section">
+      <button class="btn btn-back" onclick="cancelCheckout()">⬅ Volver a editar pedido</button>
+      <div class="card">
+        <h3>✅ Confirmar y Enviar Pedido</h3>
+        <div id="checkoutSummaryBox" class="alert-info" style="white-space:pre-line;"></div>
+        <div id="checkoutAnticipoWarn" class="alert-warn" style="display:none;">
+          ⚠️ <strong>Nota sobre volumen:</strong> Por el monto de tu pedido se requiere un <strong>50% de anticipo</strong> para iniciar producción; nos pondremos en contacto contigo al recibir tu solicitud.
+        </div>
+
+        <label>Tu Nombre Completo:</label>
+        <input type="text" id="chkClientName" placeholder="Ej. María López">
+
+        <label>Tu WhatsApp (10 dígitos):</label>
+        <input type="tel" id="chkClientPhone" maxlength="10" placeholder="Ej. 9931234567">
+
+        <label>¿Para cuándo necesitas tu pedido?</label>
+        <div class="opt-group" id="chkUrgencyGroup">
+          <div class="opt-btn" onclick="setUrgency('URGENTE', this)">⚡ Urgente (Lo antes posible)</div>
+          <div class="opt-btn active" onclick="setUrgency('HOY', this)">🕒 Hoy mismo</div>
+          <div class="opt-btn" onclick="setUrgency('OTRO_DIA', this)">📅 Para otro día</div>
+        </div>
+        <div id="chkScheduleBox" style="display:none;">
+          <label>¿Qué día o qué hora aproximada pasarías? (opcional):</label>
+          <input type="text" id="chkScheduleNote" placeholder="Ej. Mañana a las 4:00 PM">
+        </div>
+
+        <button class="btn btn-success" style="width:100%; padding:14px; font-size:15px; margin-top:8px;" id="btnFinalSend" onclick="submitFinalOrder()">
+          🚀 Enviar Pedido y Abrir WhatsApp
+        </button>
+      </div>
+    </div>
+
+  </div> <!-- Fin .container -->
+  <script>
+    // =========================================================
+    // 1. CONFIGURACIÓN FIREBASE Y ESTADO GLOBAL
+    // =========================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDummyKeyReplaceIfNeeded",
+      authDomain: "://firebaseapp.com",
+      databaseURL: "https://firebaseio.com",
+      projectId: "distinction-cobatab",
+      storageBucket: "://appspot.com"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cloudflare.com';
+
+    let brandConfig = { nombre: 'DISTINCTION IMPRESIONES', slogan: 'Calidad y rapidez en cada página', whatsapp: '529931234567', ubicacion: 'Villahermosa, Tabasco' };
+    let tarifas = {
+      operacion: { tallerAbierto: true, minAnticipo: 150 },
+      docs: { stdBN: 1.0, stdColor: 2.5, r1BN: 0.80, r1Color: 1.50, r2BN: 0.50, r2Color: 0.90, r3BN: 0.35, r3Color: 0.80, r4BN: 0.30, r4Color: 0.75 },
+      engargolado: { p200: 20, p350: 25, p500: 40, p650: 50 },
+      graficos: { imgCartaNormColor: 4, imgCartaNormBN: 1.5, imgCartaFoto: 10, imgOficioNormColor: 5, stkCartaFoto: 8, stkCartaAdh: 10, stkTabFoto: 12, stkTabAdh: 15 },
+      tramites: []
+    };
+    let catalogCobatab = {};
+    let currentViewId = 'viewHome';
+
+    // Estado por sección
+    const state = {
+      docFile: null, docPages: 0, docSize: 'Carta', docSides: 'Una cara', docColor: 'BN', docBind: 'NO',
+      selectedTramite: null,
+      imgItems: [], imgIsPdf: false, imgPdfPages: 0, imgSize: 'Carta', imgPaper: 'Normal', imgW: 3, imgH: 3, imgColor: 'COLOR', imgRepeat: false, imgSheets: 0,
+      stkItems: [], stkIsPdf: false, stkPdfPages: 0, stkSize: 'Carta', stkPaper: 'Fotografico', stkShape: 'Cuadrado', stkSheets: 0, stkEmptySlots: 0,
+      extFiles: [], extSides: 'Una cara', extColor: 'BN', extBind: 'NO',
+      urgency: 'HOY', pendingCheckout: null
+    };
+
+    // =========================================================
+    // 2. INTRO ANIMADO, SINCRONIZACIÓN FIREBASE Y NAVEGACIÓN
+    // =========================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const sp = document.getElementById('splashScreen');
+        if (sp) sp.classList.add('hide');
+      }, 1400);
+
+      // Precargar nombre y teléfono del cliente si ya pidió antes
+      if (localStorage.getItem('di_client_name')) document.getElementById('chkClientName').value = localStorage.getItem('di_client_name');
+      if (localStorage.getItem('di_client_phone')) document.getElementById('chkClientPhone').value = localStorage.getItem('di_client_phone');
+
+      // Escuchar Marca
+      db.ref('config_marca').on('value', s => {
+        const m = s.val();
+        if (!m) return;
+        brandConfig = { ...brandConfig, ...m };
+        document.getElementById('pubBrandName').textContent = brandConfig.nombre;
+        document.getElementById('splashTitle').textContent = brandConfig.nombre;
+        document.getElementById('splashSub').textContent = brandConfig.slogan;
+        document.getElementById('pubLocation').textContent = brandConfig.ubicacion;
+        if (brandConfig.logoUrl) {
+          ['pubLogo', 'splashLogo'].forEach(id => {
+            document.getElementById(id).innerHTML = `<img src="${brandConfig.logoUrl}" alt="Logo">`;
+          });
+        }
+      });
+
+      // Escuchar Tarifas, Trámites y Estado Taller
+      db.ref('config_tarifas').on('value', s => {
+        const t = s.val();
+        if (!t) return;
+        if (t.operacion) tarifas.operacion = t.operacion;
+        if (t.docs) tarifas.docs = t.docs;
+        if (t.engargolado) tarifas.engargolado = t.engargolado;
+        if (t.graficos) tarifas.graficos = t.graficos;
+        if (Array.isArray(t.tramites)) tarifas.tramites = t.tramites;
+        document.getElementById('closedShopBanner').style.display = tarifas.operacion.tallerAbierto === false ? 'block' : 'none';
+        renderTramitesPublic();
+      });
+
+      // Escuchar Catálogo COBATAB
+      db.ref('catalogo_cobatab').on('value', s => {
+        catalogCobatab = s.val() || {};
+        renderCobatabBooks();
+      });
+    });
+
+    function openView(id) {
+      if (id !== 'viewCheckout') currentViewId = id;
+      document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function cancelCheckout() { openView(currentViewId); }
+
+    function selectOpt(key, val, el) {
+      state[key] = val;
+      if (el && el.parentElement) {
+        el.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+      }
+      if (key.startsWith('doc')) calcDocTotal();
+      if (key.startsWith('img')) recalcImgLayout();
+      if (key.startsWith('stk')) recalcStkLayout();
+      if (key.startsWith('ext')) calcExtTotal();
+    }
+
+    function getBindPrice(pages) {
+      if (pages <= 200) return { price: tarifas.engargolado.p200, warn: false };
+      if (pages <= 350) return { price: tarifas.engargolado.p350, warn: false };
+      if (pages <= 500) return { price: tarifas.engargolado.p500, warn: false };
+      if (pages <= 650) return { price: tarifas.engargolado.p650, warn: false };
+      return { price: 0, warn: true };
+    }
+    // =========================================================
+    // 3. SECCIÓN 1: LIBROS COBATAB
+    // =========================================================
+    function renderCobatabBooks() {
+      const sem = document.getElementById('cobSemestre').value;
+      const box = document.getElementById('cobBooksList');
+      const cycles = Object.keys(catalogCobatab);
+      let books = [];
+      cycles.forEach(c => {
+        if (catalogCobatab[c] && Array.isArray(catalogCobatab[c][sem])) {
+          books = books.concat(catalogCobatab[c][sem]);
+        }
+      });
+      if (!books.length) {
+        box.innerHTML = '<p style="color:var(--muted); font-size:13px; padding:10px;">No hay libros publicados para este semestre aún.</p>';
+        calcCobatabTotal();
+        return;
+      }
+      box.innerHTML = books.map((b, i) => `
+        <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-card-alt); padding:10px 12px; border-radius:10px; border:1px solid var(--border); margin-bottom:8px; cursor:pointer;">
+          <span style="display:flex; align-items:center; gap:10px; color:var(--text);">
+            <input type="checkbox" class="cob-chk" data-title="${b.titulo}" data-price="${b.precio}" data-pages="${b.paginas || 100}" data-pdf="${b.pdfUrl || ''}" checked onchange="calcCobatabTotal()" style="width:auto; margin:0;">
+            <span><strong>${b.titulo}</strong><br><small style="color:var(--muted);">${b.serie || 'Tronco Común'} • ${b.paginas || 100} págs.</small></span>
+          </span>
+          <strong style="color:#34d399;">$${parseFloat(b.precio).toFixed(2)}</strong>
+        </label>
+      `).join('');
+      calcCobatabTotal();
+    }
+    function toggleAllCobatab(checked) {
+      document.querySelectorAll('.cob-chk').forEach(c => c.checked = checked);
+      calcCobatabTotal();
+    }
+    function calcCobatabTotal() {
+      let sum = 0;
+      document.querySelectorAll('.cob-chk:checked').forEach(c => sum += parseFloat(c.dataset.price) || 0);
+      document.getElementById('cobTotal').textContent = `$${sum.toFixed(2)}`;
+      return sum;
+    }
+
+    // =========================================================
+    // 4. SECCIÓN 2.1: DOCUMENTOS PDF Y TRÁMITES DINÁMICOS
+    // =========================================================
+    function switchSubDocImg(mode) {
+      document.getElementById('btnSubDoc').classList.toggle('active', mode === 'DOC');
+      document.getElementById('btnSubImg').classList.toggle('active', mode === 'IMG');
+      document.getElementById('panelRamaDoc').style.display = mode === 'DOC' ? 'block' : 'none';
+      document.getElementById('panelRamaImg').style.display = mode === 'IMG' ? 'block' : 'none';
+    }
+    function switchDocMode(mode) {
+      document.getElementById('btnDocArchivos').classList.toggle('active', mode === 'ARCHIVOS');
+      document.getElementById('btnDocTramites').classList.toggle('active', mode === 'TRAMITES');
+      document.getElementById('subDocArchivos').style.display = mode === 'ARCHIVOS' ? 'block' : 'none';
+      document.getElementById('subDocTramites').style.display = mode === 'TRAMITES' ? 'block' : 'none';
+    }
+    async function countPdfPages(file) {
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      return pdf.numPages;
+    }
+    async function handleDocPdfUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      state.docFile = file;
+      document.getElementById('docPdfInfo').textContent = '⏳ Contando páginas del PDF...';
+      try {
+        state.docPages = await countPdfPages(file);
+        document.getElementById('docPdfInfo').textContent = `✅ ${file.name} — ${state.docPages} páginas detectadas`;
+        calcDocTotal();
+      } catch (err) {
+        document.getElementById('docPdfInfo').textContent = '⚠️ No se pudo leer el PDF. Verifica que no tenga contraseña.';
+      }
+    }
+    function calcDocTotal() {
+      const isBN = state.docColor === 'BN';
+      document.getElementById('docMixtoNote').style.display = isBN ? 'none' : 'block';
+      document.getElementById('docActionBtn').textContent = isBN ? 'Continuar con mi Pedido ➡️' : '💬 Solicitar Cotización Justa por WhatsApp ➡️';
+
+      if (!state.docPages) {
+        document.getElementById('docTotalAmount').textContent = '$0.00';
+        return 0;
+      }
+      if (!isBN) {
+        document.getElementById('docTotalLabel').textContent = 'Cotización Personalizada:';
+        document.getElementById('docTotalAmount').textContent = 'Por revisar';
+        return 0;
+      }
+      document.getElementById('docTotalLabel').textContent = 'Total Estimado:';
+      let total = state.docPages * (tarifas.docs.stdBN || 1.0);
+      if (state.docBind === 'SI') {
+        const b = getBindPrice(state.docPages);
+        total += b.price;
+      }
+      document.getElementById('docTotalAmount').textContent = `$${total.toFixed(2)}`;
+      return total;
+    }
+
+    function renderTramitesPublic() {
+      const box = document.getElementById('tramitesPublicList');
+      const activos = (tarifas.tramites || []).filter(t => t.activo !== false);
+      if (!activos.length) {
+        box.innerHTML = '<p style="color:var(--muted); font-size:13px;">Por el momento no hay trámites configurados.</p>';
+        return;
+      }
+      box.innerHTML = activos.map(t => `
+        <div class="opt-btn" style="display:flex; justify-content:space-between; align-items:center;" onclick="selectTramite('${t.id}', this)">
+          <span>${t.nombre}</span>
+          <strong style="color:#34d399;">$${parseFloat(t.precio).toFixed(2)}</strong>
+        </div>
+      `).join('');
+    }
+    function selectTramite(id, el) {
+      state.selectedTramite = (tarifas.tramites || []).find(t => t.id === id) || null;
+      document.querySelectorAll('#tramitesPublicList .opt-btn').forEach(b => b.classList.remove('active'));
+      if (el) el.classList.add('active');
+      document.getElementById('tramiteFormBox').style.display = state.selectedTramite ? 'block' : 'none';
+    }
+
+    // =========================================================
+    // 5. SECCIÓN 4: TRABAJOS EXTENSOS / LIBROS PDF
+    // =========================================================
+    async function handleExtPdfsUpload(e) {
+      const files = Array.from(e.target.files || []);
+      for (const f of files) {
+        const pgs = await countPdfPages(f);
+        state.extFiles.push({ file: f, name: f.name, pages: pgs });
+      }
+      renderExtFilesList();
+      calcExtTotal();
+    }
+    function removeExtFile(idx) {
+      state.extFiles.splice(idx, 1);
+      renderExtFilesList();
+      calcExtTotal();
+    }
+    function renderExtFilesList() {
+      const box = document.getElementById('extFilesList');
+      const totalPgs = state.extFiles.reduce((s, f) => s + f.pages, 0);
+      box.innerHTML = state.extFiles.map((f, i) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-alt); padding:8px 12px; border-radius:8px; margin-bottom:6px; font-size:13px;">
+          <span>📄 ${f.name} (<strong>${f.pages} págs.</strong>)</span>
+          <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="removeExtFile(${i})">✕</button>
+        </div>
+      `).join('') + (totalPgs ? `<div style="text-align:right; font-size:13px; color:#60a5fa; font-weight:700;">Gran Total Acumulado: ${totalPgs} páginas</div>` : '');
+    }
+    function calcExtTotal() {
+      const totalPgs = state.extFiles.reduce((s, f) => s + f.pages, 0);
+      const prog = document.getElementById('extProgressBanner');
+      const bindBox = document.getElementById('extBindBreakdown');
+      if (!totalPgs) {
+        document.getElementById('extTotalAmount').textContent = '$0.00';
+        prog.style.display = 'none';
+        bindBox.innerHTML = '';
+        return 0;
+      }
+
+      const isColor = state.extColor === 'COLOR';
+      let rate = isColor ? tarifas.docs.stdColor : tarifas.docs.stdBN;
+      let nextMsg = '';
+
+      if (totalPgs < 80) {
+        nextMsg = `ℹ️ Tarifa estándar ($${rate.toFixed(2)}/pág.). ¡Agrega ${80 - totalPgs} páginas más para activar el descuento de mayoreo!`;
+      } else if (totalPgs < 200) {
+        rate = isColor ? tarifas.docs.r1Color : tarifas.docs.r1BN;
+        nextMsg = `🎯 ¡Estás a solo ${200 - totalPgs} páginas de bajar tu tarifa a $${(isColor ? tarifas.docs.r2Color : tarifas.docs.r2BN).toFixed(2)}/pág.!`;
+      } else if (totalPgs < 350) {
+        rate = isColor ? tarifas.docs.r2Color : tarifas.docs.r2BN;
+        nextMsg = `🎯 ¡Estás a solo ${350 - totalPgs} páginas de bajar tu tarifa a $${(isColor ? tarifas.docs.r3Color : tarifas.docs.r3BN).toFixed(2)}/pág.!`;
+      } else if (totalPgs < 500) {
+        rate = isColor ? tarifas.docs.r3Color : tarifas.docs.r3BN;
+        nextMsg = `🎯 ¡Estás a solo ${500 - totalPgs} páginas de alcanzar nuestra tarifa mínima ($${(isColor ? tarifas.docs.r4Color : tarifas.docs.r4BN).toFixed(2)}/pág.)!`;
+      } else {
+        rate = isColor ? tarifas.docs.r4Color : tarifas.docs.r4BN;
+        nextMsg = `🏆 ¡Tarifa máxima de mayoreo activada ($${rate.toFixed(2)}/pág.)!`;
+      }
+      prog.textContent = nextMsg;
+      prog.style.display = 'block';
+
+      let bindTotal = 0;
+      let bindNotes = [];
+      if (state.extBind === 'SI') {
+        state.extFiles.forEach(f => {
+          const b = getBindPrice(f.pages);
+          if (b.warn) {
+            bindNotes.push(`⚠️ <strong>${f.name}</strong> (${f.pages} págs.): No existe engargolado de un solo tomo para +650 págs., pero se puede seccionar en dos o más partes engargoladas (te contactaremos en breve).`);
+          } else {
+            bindTotal += b.price;
+            bindNotes.push(`📎 Engargolado ${f.name} (${f.pages} págs.): +$${b.price.toFixed(2)}`);
+          }
+        });
+      }
+      bindBox.innerHTML = bindNotes.join('<br>');
+
+      const grandTotal = (totalPgs * rate) + bindTotal;
+      document.getElementById('extRateInfo').textContent = `Tarifa aplicada: $${rate.toFixed(2)} / pág. (${totalPgs} págs.)`;
+      document.getElementById('extTotalAmount').textContent = `$${grandTotal.toFixed(2)}`;
+      return grandTotal;
+    }
+
+    // =========================================================
+    // 6. MOTOR SILENCIOSO DE IMPOSICIÓN (5 MM) — IMÁGENES Y STICKERS
+    // =========================================================
+    const SHEET_DIMS = {
+      Carta: { w: 215.9, h: 279.4 },
+      Oficio: { w: 215.9, h: 340.1 },
+      Tabloide: { w: 279.4, h: 431.8 }
+    };
+
+    function loadImageElement(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => resolve({ img, src: e.target.result, name: file.name, natW: img.naturalWidth, natH: img.naturalHeight, qty: 1 });
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // --- RAMA 2.2: IMÁGENES ---
+    async function handleImgSectionUpload(e) {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      state.imgItems = [];
+      state.imgIsPdf = false;
+      state.imgPdfPages = 0;
+
+      if (files.length === 1 && files.type === 'application/pdf') {
+        state.imgIsPdf = true;
+        state.imgPdfPages = await countPdfPages(files);
+        state.imgItems.push({ file: files, name: files.name });
+        document.getElementById('imgControlsWrap').style.display = 'none';
+        recalcImgLayout();
+        return;
+      }
+
+      document.getElementById('imgControlsWrap').style.display = 'block';
+      let lowRes = false;
+      for (const f of files) {
+        if (!f.type.startsWith('image/')) continue;
+        const item = await loadImageElement(f);
+        if (item.natW < 400 || item.natH < 400) lowRes = true;
+        state.imgItems.push(item);
+      }
+      document.getElementById('imgQualityWarn').style.display = lowRes ? 'block' : 'none';
+      renderImgRepeatControls();
+      recalcImgLayout();
+    }
+
+    function setImgSize(sz, el) {
+      state.imgSize = sz;
+      el.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('imgPaperRow').style.display = sz === 'Carta' ? 'block' : 'none';
+      if (sz === 'Oficio') state.imgPaper = 'Normal';
+      recalcImgLayout();
+    }
+    function setImgPreset(w, h, el) {
+      el.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      const customBox = document.getElementById('imgCustomDims');
+      if (w === 0) {
+        customBox.style.display = 'grid';
+      } else {
+        customBox.style.display = 'none';
+        state.imgW = w; state.imgH = h;
+      }
+      recalcImgLayout();
+    }
+    function toggleImgRepeat(rep, el) {
+      state.imgRepeat = rep;
+      el.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('imgRepeatList').style.display = rep ? 'block' : 'none';
+      if (!rep) state.imgItems.forEach(it => it.qty = 1);
+      renderImgRepeatControls();
+      recalcImgLayout();
+    }
+    function renderImgRepeatControls() {
+      const box = document.getElementById('imgRepeatList');
+      if (!state.imgRepeat) { box.innerHTML = ''; return; }
+      box.innerHTML = state.imgItems.map((it, idx) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-card-alt); padding:8px 10px; border-radius:8px; margin-bottom:6px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="${it.src}" style="width:36px; height:36px; object-fit:cover; border-radius:6px;">
+            <span style="font-size:12px;">${it.name.slice(0, 20)}</span>
+          </div>
+          <input type="number" min="1" value="${it.qty}" style="width:75px; margin:0; text-align:center;" onchange="state.imgItems[${idx}].qty=Math.max(1,parseInt(this.value)||1); recalcImgLayout()">
+        </div>
+      `).join('');
+    }
+
+    function computeGridLayout(sheetKey, itemWcm, itemHcm, totalPieces) {
+      const sh = SHEET_DIMS[sheetKey] || SHEET_DIMS.Carta;
+      const margin = 5, gap = 5;
+      const wMm = itemWcm * 10, hMm = itemHcm * 10;
+      const usableW = sh.w - margin * 2, usableH = sh.h - margin * 2;
+      const colsN = Math.max(1, Math.floor((usableW + gap) / (wMm + gap)));
+      const rowsN = Math.max(1, Math.floor((usableH + gap) / (hMm + gap)));
+      const perSheet = colsN * rowsN;
+      const sheets = totalPieces > 0 ? Math.ceil(totalPieces / perSheet) : 0;
+      const emptySlots = sheets > 0 ? (sheets * perSheet) - totalPieces : 0;
+      return { sh, margin, gap, wMm, hMm, cols: colsN, rows: rowsN, perSheet, sheets, emptySlots };
+    }
+
+    function drawSheetPreview(canvasId, layout, itemsExpanded, grayscale, shape) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const scale = 320 / layout.sh.w;
+      canvas.width = 320;
+      canvas.height = Math.round(layout.sh.h * scale);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      let idx = 0;
+      for (let r = 0; r < layout.rows; r++) {
+        for (let c = 0; c < layout.cols; c++) {
+          if (idx >= itemsExpanded.length) break;
+          const x = (layout.margin + c * (layout.wMm + layout.gap)) * scale;
+          const y = (layout.margin + r * (layout.hMm + layout.gap)) * scale;
+          const w = layout.wMm * scale;
+          const h = layout.hMm * scale;
+          ctx.save();
+          if (grayscale) ctx.filter = 'grayscale(100%)';
+          if (shape === 'Circular') {
+            ctx.beginPath();
+            ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+            ctx.clip();
+          }
+          ctx.drawImage(itemsExpanded[idx].img, x, y, w, h);
+          ctx.restore();
+          ctx.strokeStyle = '#94a3b8';
+          ctx.setLineDash([2, 2]);
+          ctx.strokeRect(x, y, w, h);
+          idx++;
+        }
+      }
+    }
+
+    function recalcImgLayout() {
+      if (state.imgIsPdf) {
+        state.imgSheets = state.imgPdfPages;
+        const unit = state.imgSize === 'Oficio' ? tarifas.graficos.imgOficioNormColor : (state.imgPaper === 'Fotografico' ? tarifas.graficos.imgCartaFoto : (state.imgColor === 'COLOR' ? tarifas.graficos.imgCartaNormColor : tarifas.graficos.imgCartaNormBN));
+        const tot = state.imgSheets * unit;
+        document.getElementById('imgSheetsLabel').textContent = `Total PDF (${state.imgSheets} págs.):`;
+        document.getElementById('imgTotalAmount').textContent = `$${tot.toFixed(2)}`;
+        return tot;
+      }
+      if (document.getElementById('imgCustomDims').style.display === 'grid') {
+        state.imgW = parseFloat(document.getElementById('imgCustomW').value) || 3;
+        state.imgH = parseFloat(document.getElementById('imgCustomH').value) || 3;
+      }
+      const expanded = [];
+      state.imgItems.forEach(it => { for (let i = 0; i < (it.qty || 1); i++) expanded.push(it); });
+      const layout = computeGridLayout(state.imgSize, state.imgW, state.imgH, expanded.length);
+      state.imgSheets = layout.sheets;
+      drawSheetPreview('imgPreviewCanvas', layout, expanded, state.imgColor === 'BN', 'Cuadrado');
+      document.getElementById('imgPreviewStats').textContent = `Caben ${layout.perSheet} por hoja • ${layout.sheets} hoja(s) en total (sep. 5 mm)`;
+
+      const unit = state.imgSize === 'Oficio' ? tarifas.graficos.imgOficioNormColor : (state.imgPaper === 'Fotografico' ? tarifas.graficos.imgCartaFoto : (state.imgColor === 'COLOR' ? tarifas.graficos.imgCartaNormColor : tarifas.graficos.imgCartaNormBN));
+      const tot = state.imgSheets * unit;
+      document.getElementById('imgSheetsLabel').textContent = `Total (${state.imgSheets} hojas):`;
+      document.getElementById('imgTotalAmount').textContent = `$${tot.toFixed(2)}`;
+      return tot;
+    }
+    // --- SECCIÓN 3: STICKERS / TABLOIDES ---
+    async function handleStkSectionUpload(e) {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      state.stkItems = [];
+      state.stkIsPdf = false;
+      state.stkPdfPages = 0;
+
+      if (files.length === 1 && files[0].type === 'application/pdf') {
+        state.stkIsPdf = true;
+        state.stkPdfPages = await countPdfPages(files[0]);
+        state.stkItems.push({ file: files[0], name: files[0].name });
+        document.getElementById('stkControlsWrap').style.display = 'none';
+        document.getElementById('stkQtyContainer').innerHTML = `<div class="alert-info">📄 PDF listo detectado: <strong>${files[0].name}</strong> (${state.stkPdfPages} páginas).</div>`;
+        recalcStkLayout();
+        return;
+      }
+
+      document.getElementById('stkControlsWrap').style.display = 'block';
+      let lowRes = false;
+      for (const f of files) {
+        if (!f.type.startsWith('image/')) continue;
+        const item = await loadImageElement(f);
+        item.qty = files.length === 1 ? 10 : 5;
+        if (item.natW < 400 || item.natH < 400) lowRes = true;
+        state.stkItems.push(item);
+      }
+      document.getElementById('stkQualityWarn').style.display = lowRes ? 'block' : 'none';
+      renderStkQtyInputs();
+      recalcStkLayout();
+    }
+
+    function renderStkQtyInputs() {
+      const box = document.getElementById('stkQtyContainer');
+      if (state.stkItems.length === 1) {
+        box.innerHTML = `<label>¿Cuántos stickers deseas?</label><input type="number" min="1" value="${state.stkItems[0].qty}" oninput="state.stkItems[0].qty=Math.max(1,parseInt(this.value)||1); recalcStkLayout()">`;
+        return;
+      }
+      box.innerHTML = `<label>Cantidad de stickers por cada diseño:</label>` + state.stkItems.map((it, idx) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-card-alt); padding:8px 10px; border-radius:8px; margin-bottom:6px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="${it.src}" style="width:36px; height:36px; object-fit:cover; border-radius:6px;">
+            <span style="font-size:12px;">${it.name.slice(0, 20)}</span>
+          </div>
+          <input type="number" min="1" value="${it.qty}" style="width:80px; margin:0; text-align:center;" oninput="state.stkItems[${idx}].qty=Math.max(1,parseInt(this.value)||1); recalcStkLayout()">
+        </div>
+      `).join('');
+    }
+
+    function recalcStkLayout() {
+      const getUnit = () => {
+        if (state.stkSize === 'Tabloide') return state.stkPaper === 'Adhesivo' ? tarifas.graficos.stkTabAdh : tarifas.graficos.stkTabFoto;
+        return state.stkPaper === 'Adhesivo' ? tarifas.graficos.stkCartaAdh : tarifas.graficos.stkCartaFoto;
+      };
+      if (state.stkIsPdf) {
+        state.stkSheets = state.stkPdfPages;
+        const tot = state.stkSheets * getUnit();
+        document.getElementById('stkSheetsLabel').textContent = `Total PDF (${state.stkSheets} págs.):`;
+        document.getElementById('stkTotalAmount').textContent = `$${tot.toFixed(2)}`;
+        return tot;
+      }
+      const w = parseFloat(document.getElementById('stkW').value) || 5;
+      const h = parseFloat(document.getElementById('stkH').value) || 5;
+      const expanded = [];
+      state.stkItems.forEach(it => { for (let i = 0; i < (it.qty || 1); i++) expanded.push(it); });
+      const layout = computeGridLayout(state.stkSize, w, h, expanded.length);
+      state.stkSheets = layout.sheets;
+      state.stkEmptySlots = layout.emptySlots;
+
+      drawSheetPreview('stkPreviewCanvas', layout, expanded, false, state.stkShape);
+      document.getElementById('stkPreviewStats').textContent = `Caben ${layout.perSheet} por planilla • ${layout.sheets} hoja(s) en total (sep. 5 mm)`;
+
+      const upsell = document.getElementById('stkUpsellBox');
+      if (layout.emptySlots > 0 && expanded.length > 0) {
+        upsell.style.display = 'flex';
+        document.getElementById('stkUpsellText').textContent = `💡 ¡Aprovecha tu hoja al máximo! Todavía te caben ${layout.emptySlots} stickers más en esta misma hoja sin costo extra.`;
+      } else {
+        upsell.style.display = 'none';
+      }
+
+      const tot = state.stkSheets * getUnit();
+      document.getElementById('stkSheetsLabel').textContent = `Total (${state.stkSheets} hojas):`;
+      document.getElementById('stkTotalAmount').textContent = `$${tot.toFixed(2)}`;
+      return tot;
+    }
+
+    function fillEmptyStickerSlots() {
+      if (!state.stkItems.length || state.stkEmptySlots <= 0) return;
+      state.stkItems[0].qty += state.stkEmptySlots;
+      renderStkQtyInputs();
+      recalcStkLayout();
+    }
+    // =========================================================
+    // 7. GENERACIÓN DE PDF A ESCALA REAL (jsPDF) Y CIERRE PEDIDO
+    // =========================================================
+    function buildImposedPdfBlob(sheetKey, wCm, hCm, itemsList, grayscale) {
+      const { jsPDF } = window.jspdf;
+      const sh = SHEET_DIMS[sheetKey] || SHEET_DIMS.Carta;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [sh.w, sh.h] });
+      const expanded = [];
+      itemsList.forEach(it => { for (let i = 0; i < (it.qty || 1); i++) expanded.push(it); });
+      const layout = computeGridLayout(sheetKey, wCm, hCm, expanded.length);
+
+      let idx = 0;
+      for (let p = 0; p < layout.sheets; p++) {
+        if (p > 0) pdf.addPage([sh.w, sh.h], 'portrait');
+        for (let r = 0; r < layout.rows; r++) {
+          for (let c = 0; c < layout.cols; c++) {
+            if (idx >= expanded.length) break;
+            const x = layout.margin + c * (layout.wMm + layout.gap);
+            const y = layout.margin + r * (layout.hMm + layout.gap);
+            pdf.addImage(expanded[idx].src, 'JPEG', x, y, layout.wMm, layout.hMm);
+            pdf.setDrawColor(180);
+            pdf.setLineWidth(0.2);
+            pdf.rect(x, y, layout.wMm, layout.hMm);
+            idx++;
+          }
+        }
+      }
+      return pdf.output('blob');
+    }
+
+    function setUrgency(val, el) {
+      state.urgency = val;
+      el.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('chkScheduleBox').style.display = val === 'OTRO_DIA' ? 'block' : 'none';
+    }
+
+    function prepareCheckout(tipo) {
+      let resumen = '', total = 0, catBandeja = tipo, paginas = 0;
+
+      if (tipo === 'COBATAB') {
+        const chks = Array.from(document.querySelectorAll('.cob-chk:checked'));
+        if (!chks.length) return alert('Selecciona al menos un libro.');
+        const sem = document.getElementById('cobSemestre').value;
+        const grp = document.getElementById('cobGrupo').value.trim();
+        total = calcCobatabTotal();
+        paginas = chks.reduce((s, c) => s + (parseInt(c.dataset.pages) || 0), 0);
+        resumen = `📚 Libros COBATAB (${sem}° Semestre ${grp ? 'Grupo ' + grp : ''}):\n` + chks.map(c => `• ${c.dataset.title} ($${c.dataset.price})`).join('\n');
+      } else if (tipo === 'DOCUMENTO') {
+        if (!state.docFile) return alert('Por favor sube tu archivo PDF primero.');
+        catBandeja = 'DOCUMENTOS';
+        paginas = state.docPages;
+        total = calcDocTotal();
+        const isQuote = state.docColor !== 'BN';
+        resumen = `📄 Documento PDF: ${state.docFile.name} (${paginas} págs.)\n• Tamaño: ${state.docSize} | ${state.docSides} | Color: ${state.docColor}\n• Engargolado: ${state.docBind === 'SI' ? 'Sí' : 'No'}${isQuote ? '\n💬 Solicitud de Cotización Justa a Color' : ''}`;
+      } else if (tipo === 'TRAMITE') {
+        if (!state.selectedTramite) return alert('Selecciona un trámite primero.');
+        catBandeja = 'TRAMITES';
+        total = parseFloat(state.selectedTramite.precio) || 0;
+        const notas = document.getElementById('tramiteNotes').value.trim();
+        resumen = `🪪 Trámite: ${state.selectedTramite.nombre}\n• Datos/Notas: ${notas || 'Ver archivo adjunto'}`;
+      } else if (tipo === 'IMAGEN') {
+        if (!state.imgItems.length) return alert('Carga al menos una imagen o PDF.');
+        catBandeja = 'STICKERS';
+        total = recalcImgLayout();
+        paginas = state.imgSheets;
+        resumen = `🖼️ Impresión de Imágenes (${state.imgSheets} hojas)\n• Hoja: ${state.imgSize} (${state.imgPaper}) | Color: ${state.imgColor}`;
+      } else if (tipo === 'STICKER') {
+        if (!state.stkItems.length) return alert('Carga al menos un diseño o PDF.');
+        catBandeja = 'STICKERS';
+        total = recalcStkLayout();
+        paginas = state.stkSheets;
+        resumen = `🏷️ Stickers / Tabloides (${state.stkSheets} hojas)\n• Formato: ${state.stkSize} (${state.stkPaper}) | Corte: ${state.stkShape}`;
+      } else if (tipo === 'EXTENSO') {
+        if (!state.extFiles.length) return alert('Sube al menos un archivo PDF.');
+        catBandeja = 'DOCUMENTOS';
+        paginas = state.extFiles.reduce((s, f) => s + f.pages, 0);
+        total = calcExtTotal();
+        resumen = `📖 Trabajos Extensos / Libros (${paginas} págs. totales):\n` + state.extFiles.map(f => `• ${f.name} (${f.pages} págs.)`).join('\n') + `\n• ${state.extSides} | ${state.extColor} | Engargolado: ${state.extBind}`;
+      }
+
+      state.pendingCheckout = { tipo, catBandeja, resumen, total, paginas };
+      document.getElementById('checkoutSummaryBox').textContent = `${resumen}\n\n💰 Total: ${total > 0 ? '$' + total.toFixed(2) + ' MXN' : 'Por cotizar'}`;
+      document.getElementById('checkoutAnticipoWarn').style.display = (total >= (tarifas.operacion.minAnticipo || 150)) ? 'block' : 'none';
+      openView('viewCheckout');
+    }
+    async function submitFinalOrder() {
+      const nombre = document.getElementById('chkClientName').value.trim();
+      const phone = document.getElementById('chkClientPhone').value.replace(/\D/g, '');
+      if (!nombre || phone.length < 10) return alert('Por favor ingresa tu nombre y WhatsApp a 10 dígitos.');
+
+      localStorage.setItem('di_client_name', nombre);
+      localStorage.setItem('di_client_phone', phone);
+
+      const btn = document.getElementById('btnFinalSend');
+      btn.disabled = true;
+      btn.textContent = '⏳ Subiendo archivos y generando folio...';
+
+      try {
+        const folio = '#DI-' + Math.floor(1000 + Math.random() * 9000);
+        const ck = state.pendingCheckout;
+        let pdfUrl = '';
+
+        // Subir PDF o adjunto a Firebase Storage
+        if (ck.tipo === 'DOCUMENTO' && state.docFile) {
+          const ref = storage.ref(`pedidos_pdf/${folio}_${state.docFile.name}`);
+          pdfUrl = await (await ref.put(state.docFile)).ref.getDownloadURL();
+        } else if (ck.tipo === 'TRAMITE') {
+          const f = document.getElementById('tramiteFileInput').files[0];
+          if (f) {
+            const ref = storage.ref(`tramites_adjuntos/${folio}_${f.name}`);
+            pdfUrl = await (await ref.put(f)).ref.getDownloadURL();
+          }
+        } else if (ck.tipo === 'IMAGEN') {
+          const blob = state.imgIsPdf ? state.imgItems[0].file : buildImposedPdfBlob(state.imgSize, state.imgW, state.imgH, state.imgItems, state.imgColor === 'BN');
+          const ref = storage.ref(`pedidos_pdf/${folio}_Imagenes.pdf`);
+          pdfUrl = await (await ref.put(blob)).ref.getDownloadURL();
+        } else if (ck.tipo === 'STICKER') {
+          const w = parseFloat(document.getElementById('stkW').value) || 5;
+          const h = parseFloat(document.getElementById('stkH').value) || 5;
+          const blob = state.stkIsPdf ? state.stkItems[0].file : buildImposedPdfBlob(state.stkSize, w, h, state.stkItems, false);
+          const ref = storage.ref(`pedidos_pdf/${folio}_Stickers.pdf`);
+          pdfUrl = await (await ref.put(blob)).ref.getDownloadURL();
+        } else if (ck.tipo === 'EXTENSO' && state.extFiles.length) {
+          const urls = [];
+          for (const item of state.extFiles) {
+            const ref = storage.ref(`pedidos_pdf/${folio}_${item.name}`);
+            urls.push(await (await ref.put(item.file)).ref.getDownloadURL());
+          }
+          pdfUrl = urls[0];
+          if (urls.length > 1) ck.resumen += `\n🔗 Archivos adicionales:\n` + urls.slice(1).join('\n');
+        }
+
+        const urgMap = {
+          URGENTE: '⚡ Urgente',
+          HOY: '🕒 Hoy mismo',
+          OTRO_DIA: '📅 Otro día: ' + (document.getElementById('chkScheduleNote').value.trim() || 'Sin fecha fija')
+        };
+
+        const payload = {
+          folio,
+          cliente: nombre,
+          telefono: phone,
+          categoria: ck.catBandeja,
+          resumen: ck.resumen,
+          total: ck.total,
+          paginas: ck.paginas,
+          urgencia: state.urgency,
+          urgenciaText: urgMap[state.urgency],
+          pdfUrl,
+          timestamp: Date.now()
+        };
+
+        await db.ref('pedidos_web').push(payload);
+
+        const shopWa = (brandConfig.whatsapp || '529931234567').replace(/\D/g, '');
+        const msg = encodeURIComponent(
+          `*NUEVO PEDIDO WEB — ${brandConfig.nombre}*\n` +
+          `*Folio:* ${folio}\n` +
+          `*Cliente:* ${nombre} (${phone})\n` +
+          `*Entrega:* ${urgMap[state.urgency]}\n\n` +
+          `${ck.resumen}\n\n` +
+          `*Total:* ${ck.total > 0 ? '$' + ck.total.toFixed(2) + ' MXN' : 'Por cotizar'}\n` +
+          (pdfUrl ? `*Archivo PDF:* ${pdfUrl}` : '')
+        );
+
+        alert(`✅ ¡Pedido ${folio} registrado con éxito! Ahora se abrirá WhatsApp para confirmar.`);
+        window.open(`https://wa.me{shopWa}?text=${msg}`, '_blank');
+        openView('viewHome');
+      } catch (err) {
+        alert('⚠️ Ocurrió un error al subir el pedido. Verifica tu conexión e intenta de nuevo.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Enviar Pedido y Abrir WhatsApp';
+      }
+    }
+  </script>
+</body>
+</html>
