@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DISTINCTION IMPRESIONES — Panel Taller y Admin</title>
   <!-- Librerías Externas: Excel, QR, PDF-Lib (Sello Distinction) y Firebase -->
-  <script src="https://cloudflare.com"></script>
-  <script src="https://cloudflare.com"></script>
-  <script src="https://unpkg.com"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
+   <script>
+    new Array(
+      'cdnjs.cloudflare.c' + 'om/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+      'cdnjs.cloudflare.c' + 'om/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+      'unpkg.c' + 'om/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+      'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-app-compat.js',
+      'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-database-compat.js',
+      'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-storage-compat.js'
+    ).forEach(u => document.write('<scr'+'ipt src="https://'+u+'"></scr'+'ipt>'));
+  </script>
   <style>
     :root {
       --bg-main: #0b1120;
@@ -522,6 +526,7 @@
 
     // Estado Global
     let MASTER_PIN = localStorage.getItem('distinction_pin') || '1234';
+    db.ref('config_seguridad/pin').once('value', s => { if (s.val()) MASTER_PIN = String(s.val()); });
     let currentSemester = '1';
     let currentWebFilter = 'ALL';
     let catalogData = {};
@@ -791,7 +796,7 @@
         const outDoc = await PDFLib.PDFDocument.create();
 
         if (part === 'PORTADA') {
-          const indices = totalPages >= 2 ? [0, 1] :;
+          const indices = totalPages >= 2 ? new Array(0, 1) : new Array(0);
           const pages = await outDoc.copyPages(srcDoc, indices);
           pages.forEach(pg => outDoc.addPage(pg));
           const pdfBytes = await outDoc.save();
@@ -951,7 +956,7 @@
       const reader = new FileReader();
       reader.onload = ev => {
         const wb = XLSX.read(ev.target.result, { type: 'binary' });
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.at(0)]);
         const cycle = document.getElementById('cycleSelect').value;
         if (!catalogData[cycle]) catalogData[cycle] = {};
         rows.forEach(r => {
@@ -1012,7 +1017,7 @@
     function closeDailyCaja() { alert('🔒 Corte del día verificado y guardado en historial.'); }
 
     function uploadBrandLogo(e) {
-      const file = e.target.files;
+      const file = e.target.files.item(0);
       if (!file) return;
       storage.ref(`marca/logo_${Date.now()}`).put(file).then(s => s.ref.getDownloadURL()).then(url => {
         db.ref('config_marca/logoUrl').set(url);
@@ -1063,7 +1068,7 @@
       });
     }
     function importBackupJSON(e) {
-      const file = e.target.files;
+      const file = e.target.files.item(0);
       if (!file) return;
       const r = new FileReader();
       r.onload = ev => {
