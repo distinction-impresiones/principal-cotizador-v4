@@ -1203,95 +1203,80 @@
       document.getElementById('checkoutAnticipoWarn').style.display = (total >= (tarifas.operacion.minAnticipo || 150)) ? 'block' : 'none';
       openView('viewCheckout');
     }
-    async function submitFinalOrder() {
-      const nombre = document.getElementById('chkClientName').value.trim();
-      const phone = document.getElementById('chkClientPhone').value.replace(/\D/g, '');
-      if (!nombre || phone.length < 10) return alert('Por favor ingresa tu nombre y WhatsApp a 10 dígitos.');
+     async function submitFinalOrder() {
+    const nombre = document.getElementById('chkClientName').value.trim();
+    const phone = document.getElementById('chkClientPhone').value.replace(/\D/g, '');
+    if (!nombre || phone.length < 10) return alert('Por favor ingresa tu nombre y WhatsApp a 10 dígitos.');
 
-      localStorage.setItem('di_client_name', nombre);
-      localStorage.setItem('di_client_phone', phone);
+    localStorage.setItem('di_client_name', nombre);
+    localStorage.setItem('di_client_phone', phone);
 
-      const btn = document.getElementById('btnFinalSend');
-      btn.disabled = true;
-      btn.textContent = '⏳ Subiendo archivos y generando folio...';
+    const btn = document.getElementById('btnFinalSend');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando folio y enviando...';
 
-      try {
-        const folio = '#DI-' + Math.floor(1000 + Math.random() * 9000);
-        const ck = state.pendingCheckout;
-        let pdfUrl = '';
+    try {
+      const folio = '#DI-' + Math.floor(1000 + Math.random() * 9000);
+      const ck = state.pendingCheckout;
 
-        // Subir PDF o adjunto a Firebase Storage
-        if (ck.tipo === 'DOCUMENTO' && state.docFile) {
-          const ref = storage.ref(`pedidos_pdf/${folio}_${state.docFile.name}`);
-          pdfUrl = await (await ref.put(state.docFile)).ref.getDownloadURL();
-        } else if (ck.tipo === 'TRAMITE') {
-          const f = document.getElementById('tramiteFileInput').files[0];
-          if (f) {
-            const ref = storage.ref(`tramites_adjuntos/${folio}_${f.name}`);
-            pdfUrl = await (await ref.put(f)).ref.getDownloadURL();
-          }
-        } else if (ck.tipo === 'IMAGEN') {
-          const blob = state.imgIsPdf ? state.imgItems[0].file : buildImposedPdfBlob(state.imgSize, state.imgW, state.imgH, state.imgItems, state.imgColor === 'BN');
-          const ref = storage.ref(`pedidos_pdf/${folio}_Imagenes.pdf`);
-          pdfUrl = await (await ref.put(blob)).ref.getDownloadURL();
-        } else if (ck.tipo === 'STICKER') {
-          const w = parseFloat(document.getElementById('stkW').value) || 5;
-          const h = parseFloat(document.getElementById('stkH').value) || 5;
-          const blob = state.stkIsPdf ? state.stkItems[0].file : buildImposedPdfBlob(state.stkSize, w, h, state.stkItems, false);
-          const ref = storage.ref(`pedidos_pdf/${folio}_Stickers.pdf`);
-          pdfUrl = await (await ref.put(blob)).ref.getDownloadURL();
-        } else if (ck.tipo === 'EXTENSO' && state.extFiles.length) {
-          const urls = [];
-          for (const item of state.extFiles) {
-            const ref = storage.ref(`pedidos_pdf/${folio}_${item.name}`);
-            urls.push(await (await ref.put(item.file)).ref.getDownloadURL());
-          }
-          pdfUrl = urls[0];
-          if (urls.length > 1) ck.resumen += `\n🔗 Archivos adicionales:\n` + urls.slice(1).join('\n');
-        }
-
-        const urgMap = {
-          URGENTE: '⚡ Urgente',
-          HOY: '🕒 Hoy mismo',
-          OTRO_DIA: '📅 Otro día: ' + (document.getElementById('chkScheduleNote').value.trim() || 'Sin fecha fija')
-        };
-
-        const payload = {
-          folio,
-          cliente: nombre,
-          telefono: phone,
-          categoria: ck.catBandeja,
-          resumen: ck.resumen,
-          total: ck.total,
-          paginas: ck.paginas,
-          urgencia: state.urgency,
-          urgenciaText: urgMap[state.urgency],
-          pdfUrl,
-          timestamp: Date.now()
-        };
-
-        await db.ref('pedidos_web').push(payload);
-
-        const shopWa = (brandConfig.whatsapp || '529931234567').replace(/\D/g, '');
-        const msg = encodeURIComponent(
-          `*NUEVO PEDIDO WEB — ${brandConfig.nombre}*\n` +
-          `*Folio:* ${folio}\n` +
-          `*Cliente:* ${nombre} (${phone})\n` +
-          `*Entrega:* ${urgMap[state.urgency]}\n\n` +
-          `${ck.resumen}\n\n` +
-          `*Total:* ${ck.total > 0 ? '$' + ck.total.toFixed(2) + ' MXN' : 'Por cotizar'}\n` +
-          (pdfUrl ? `*Archivo PDF:* ${pdfUrl}` : '')
-        );
-
-        alert(`✅ ¡Pedido ${folio} registrado con éxito! Ahora se abrirá WhatsApp para confirmar.`);
-        window.open(`https://wa.me{shopWa}?text=${msg}`, '_blank');
-        openView('viewHome');
-      } catch (err) {
-        alert('⚠️ Ocurrió un error al subir el pedido. Verifica tu conexión e intenta de nuevo.');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '🚀 Enviar Pedido y Abrir WhatsApp';
+      // Detectar si el cliente seleccionó archivos para avisar en WhatsApp
+      let adjuntoNota = '';
+      if (ck.tipo === 'DOCUMENTO' && state.docFile) {
+        adjuntoNota = `Archivo listo para chat: ${state.docFile.name}`;
+      } else if (ck.tipo === 'TRAMITE') {
+        const f = document.getElementById('tramiteFileInput').files.item(0);
+        if (f) adjuntoNota = `Archivo listo para chat: ${f.name}`;
+      } else if (ck.tipo === 'IMAGEN' && state.imgItems.length) {
+        adjuntoNota = `${state.imgItems.length} imagen(es) lista(s) para enviar por chat`;
+      } else if (ck.tipo === 'STICKER' && state.stkItems.length) {
+        adjuntoNota = `${state.stkItems.length} diseño(s) de sticker listo(s) para enviar por chat`;
+      } else if (ck.tipo === 'EXTENSO' && state.extFiles.length) {
+        adjuntoNota = `${state.extFiles.length} archivo(s) extenso(s) listo(s) para enviar por chat`;
       }
+
+      const urgMap = {
+        URGENTE: '⚡ Urgente',
+        HOY: '🕒 Hoy mismo',
+        OTRO_DIA: '📅 Otro día: ' + (document.getElementById('chkScheduleNote').value.trim() || 'Sin fecha fija')
+      };
+
+      const payload = {
+        folio,
+        cliente: nombre,
+        telefono: phone,
+        categoria: ck.catBandeja,
+        resumen: ck.resumen,
+        total: ck.total,
+        paginas: ck.paginas,
+        urgencia: state.urgency,
+        urgenciaText: urgMap[state.urgency],
+        pdfUrl: '',
+        notaArchivo: adjuntoNota,
+        timestamp: Date.now()
+      };
+
+      await db.ref('pedidos_web').push(payload);
+
+      const shopWa = (brandConfig.whatsapp || '529931234567').replace(/\D/g, '');
+      const msg = encodeURIComponent(
+        `*NUEVO PEDIDO WEB - ${brandConfig.nombre}*\n` +
+        `*Folio:* ${folio}\n` +
+        `*Cliente:* ${nombre} (${phone})\n` +
+        `*Entrega:* ${urgMap[state.urgency]}\n\n` +
+        `${ck.resumen}\n\n` +
+        `*Total:* ${ck.total > 0 ? '$' + ck.total.toFixed(2) + ' MXN' : 'Por cotizar'}\n` +
+        (adjuntoNota ? `*Adjunto:* ${adjuntoNota} (Te lo envío aquí en el chat)` : '')
+      );
+
+      alert(`✅ ¡Pedido ${folio} registrado con éxito! Ahora se abrirá WhatsApp para confirmar.`);
+      window.open(`https://wa.me/{shopWa}?text=${msg}`, '_blank');
+      openView('viewHome');
+    } catch (err) {
+      alert('⚠️ Ocurrió un error al subir el pedido. Verifica tu conexión e intenta de nuevo.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚀 Enviar Pedido y Abrir WhatsApp';
+  }
     }
   </script>
 </body>

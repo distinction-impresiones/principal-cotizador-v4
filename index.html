@@ -692,7 +692,7 @@
             <p style="font-size:13px; color:var(--text-muted); white-space:pre-line;">${o.resumen || ''}</p>
             <div class="order-actions">
               ${pdfBtn}
-              ${waPhone ? `<a href="https://wa.me{waPhone}?text=${waMsg}" target="_blank" class="btn btn-sm">💬 WhatsApp Cliente</a>` : ''}
+              ${waPhone ? `<a href="https://wa.me/{waPhone}?text=${waMsg}" target="_blank" class="btn btn-sm">💬 WhatsApp Cliente</a>` : ''}
               <button class="btn btn-primary btn-sm" onclick="acceptWebOrder('${o._key}', false)">🏭 Pasar a Producción</button>
               <button class="btn btn-success btn-sm" onclick="acceptWebOrder('${o._key}', true)">✅ Cobrar Directo</button>
               <button class="btn btn-danger btn-sm" onclick="deleteWebOrder('${o._key}')">🗑️ Descartar</button>
@@ -1016,15 +1016,32 @@
     }
     function closeDailyCaja() { alert('🔒 Corte del día verificado y guardado en historial.'); }
 
-    function uploadBrandLogo(e) {
-      const file = e.target.files.item(0);
-      if (!file) return;
-      storage.ref(`marca/logo_${Date.now()}`).put(file).then(s => s.ref.getDownloadURL()).then(url => {
-        db.ref('config_marca/logoUrl').set(url);
-        applyLogoVisual(url);
-        alert('✅ Logotipo actualizado en nube.');
-      });
-    }
+     function uploadBrandLogo(e) {
+    const file = e.target.files.item(0);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const maxSize = 240;
+        let w = img.width, h = img.height;
+        if (w > h && w > maxSize) { h *= maxSize / w; w = maxSize; }
+        else if (h > maxSize) { w *= maxSize / h; h = maxSize; }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const base64Url = canvas.toDataURL('image/png', 0.85);
+        db.ref('config_marca/logoUrl').set(base64Url).then(() => {
+          applyLogoVisual(base64Url);
+          alert('✅ Logotipo guardado y sincronizado con el Cotizador.');
+        }).catch(err => alert('❌ Error al guardar logo: ' + err.message));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
     function applyLogoVisual(url) {
       if (!url) return;
       ['lockLogo', 'headerLogo'].forEach(id => {
