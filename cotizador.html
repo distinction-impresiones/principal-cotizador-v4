@@ -150,23 +150,54 @@
       box-shadow: 0 0 35px rgba(59,130,246,0.45); overflow: hidden;
       animation: pulseIntro 1.4s ease-in-out infinite alternate;
     }
-    .splash-logo img { width: 100%; height: 100%; object-fit: cover; }
-    @keyframes pulseIntro { from { transform: scale(0.96); } to { transform: scale(1.04); } }
- 
- </style>
+     .splash-ring-wrap {
+    position: relative; width: 124px; height: 124px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+  }
+  .splash-ring-wrap::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    padding: 3px;
+    background: conic-gradient(from 0deg, transparent 20%, #3b82f6 55%, #38bdf8 80%, #ffffff 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: spinHalo 1.6s linear infinite;
+  }
+  .splash-logo {
+    width: 108px; height: 108px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #1e293b, #020617);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(59,130,246,0.45); overflow: hidden;
+    animation: pulseIntro 1.8s ease-in-out infinite alternate;
+  }
+  .splash-logo img {
+    width: 100%; height: 100%; object-fit: cover;
+    animation: fadeInScale 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  #splashScreen {
+    transition: opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1), transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #splashScreen.hide { opacity: 0; transform: scale(1.05); pointer-events: none; }
+  @keyframes spinHalo { to { transform: rotate(360deg); } }
+  @keyframes pulseIntro { from { transform: scale(0.96); } to { transform: scale(1.03); } }
+  @keyframes fadeInScale { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+</style>
 </head>
 <body>
 
-  <!-- INTRO / SPLASH SCREEN ANIMADO -->
-  <div id="splashScreen">
-    <div class="splash-logo" id="splashLogo">Logo</div>
-    <h2 style="font-size:20px; letter-spacing:1px; color:#f8fafc;" id="splashTitle">DISTINCTION IMPRESIONES</h2>
-    <p style="font-size:13px; color:#60a5fa; margin-top:6px;" id="splashSub">Calidad y rapidez en cada página...</p>
+<!-- INTRO / SPLASH SCREEN ANIMADO -->
+<div id="splashScreen">
+  <div class="splash-ring-wrap">
+    <div class="splash-logo" id="splashLogo"></div>
   </div>
+  <h2 style="font-size:21px; font-weight:800; letter-spacing:1.5px; color:#f8fafc; text-shadow:0 2px 12px rgba(59,130,246,0.4);" id="splashTitle">DISTINCTION IMPRESIONES</h2>
+  <p style="font-size:13px; color:#94a3b8; margin-top:6px; letter-spacing:0.3px;" id="splashSub">Calidad y rapidez en cada página...</p>
+</div>
+
 
   <!-- ENCABEZADO DE RECEPCIÓN -->
   <div class="hero-header">
-    <div class="logo-3d" id="pubLogo">Logo</div>
+    <div class="logo-3d" id="pubLogo"></div>
     <h1 id="pubBrandName">DISTINCTION IMPRESIONES</h1>
     <div class="welcome">Bienvenidos</div>
     <div class="loc" id="pubLocation">Villahermosa, Tabasco</div>
@@ -598,21 +629,31 @@
       if (localStorage.getItem('di_client_name')) document.getElementById('chkClientName').value = localStorage.getItem('di_client_name');
       if (localStorage.getItem('di_client_phone')) document.getElementById('chkClientPhone').value = localStorage.getItem('di_client_phone');
 
-      // Escuchar Marca
-      db.ref('config_marca').on('value', s => {
-        const m = s.val();
-        if (!m) return;
-        brandConfig = { ...brandConfig, ...m };
-        document.getElementById('pubBrandName').textContent = brandConfig.nombre;
-        document.getElementById('splashTitle').textContent = brandConfig.nombre;
-        document.getElementById('splashSub').textContent = brandConfig.slogan;
-        document.getElementById('pubLocation').textContent = brandConfig.ubicacion;
-        if (brandConfig.logoUrl) {
-          ['pubLogo', 'splashLogo'].forEach(id => {
-            document.getElementById(id).innerHTML = `<img src="${brandConfig.logoUrl}" alt="Logo">`;
-          });
-        }
-      });
+         // Cargar Marca al instante desde caché local + sincronizar en vivo con Firebase
+    function renderBrandUI(b) {
+      document.getElementById('pubBrandName').textContent = b.nombre;
+      document.getElementById('splashTitle').textContent = b.nombre;
+      document.getElementById('splashSub').textContent = b.slogan;
+      document.getElementById('pubLocation').textContent = b.ubicacion;
+      if (b.logoUrl) {
+        ['pubLogo', 'splashLogo'].forEach(id => {
+          document.getElementById(id).innerHTML = `<img src="${b.logoUrl}" alt="">`;
+        });
+      }
+    }
+    const cachedBrand = localStorage.getItem('di_brand_cache');
+    if (cachedBrand) {
+      try { brandConfig = { ...brandConfig, ...JSON.parse(cachedBrand) }; renderBrandUI(brandConfig); } catch(e) {}
+    }
+
+    db.ref('config_marca').on('value', s => {
+      const m = s.val();
+      if (!m) return;
+      brandConfig = { ...brandConfig, ...m };
+      localStorage.setItem('di_brand_cache', JSON.stringify(brandConfig));
+      renderBrandUI(brandConfig);
+    });
+
 
       // Escuchar Tarifas, Trámites y Estado Taller
       db.ref('config_tarifas').on('value', s => {
