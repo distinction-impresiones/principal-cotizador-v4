@@ -549,12 +549,15 @@
     // 1. CONFIGURACIÓN FIREBASE Y ESTADO GLOBAL
     // =========================================================
         const firebaseConfig = {
-      apiKey: "AIzaSyDummyKeyReplaceIfNeeded",
-      authDomain: "distinction-cobatab.firebaseapp.c" + "om",
-      databaseURL: "https://distinction-cobatab-default-rtdb.firebaseio.c" + "om",
-      projectId: "distinction-cobatab",
-      storageBucket: "distinction-cobatab.appspot.c" + "om"
-    };
+    apiKey: "AIzaSyDYaFmqdScIgN4lHJdtREFN3Zxezkr9rMw",
+    authDomain: "distinction-impresiones.firebaseapp.com",
+    databaseURL: "https://distinction-impresiones-default-rtdb.firebaseio.com",
+    projectId: "distinction-impresiones",
+    storageBucket: "distinction-impresiones.firebasestorage.app",
+    messagingSenderId: "810008692545",
+    appId: "1:810008692545:web:b53c1d310b4fa8978cc3c0"
+  };
+
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
