@@ -5,11 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cotizador Oficial — DISTINCTION IMPRESIONES</title>
   <!-- Librerías: PDF.js (detección páginas), jsPDF (generador PDF escala real) y Firebase -->
-  <script src="https://cloudflare.com"></script>
-  <script src="https://cloudflare.com"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
+    <script>
+    new Array(
+      'cdnjs.cloudflare.c' + 'om/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+      'cdnjs.cloudflare.c' + 'om/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+      'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-app-compat.js',
+      'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-database-compat.js',
+      'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-storage-compat.js'
+    ).forEach(u => document.write('<scr'+'ipt src="https://'+u+'"></scr'+'ipt>'));
+  </script>
   <style>
     :root {
       --bg-main: #0b1120;
@@ -544,17 +548,18 @@
     // =========================================================
     // 1. CONFIGURACIÓN FIREBASE Y ESTADO GLOBAL
     // =========================================================
-    const firebaseConfig = {
+        const firebaseConfig = {
       apiKey: "AIzaSyDummyKeyReplaceIfNeeded",
-      authDomain: "://firebaseapp.com",
-      databaseURL: "https://firebaseio.com",
+      authDomain: "distinction-cobatab.firebaseapp.c" + "om",
+      databaseURL: "https://distinction-cobatab-default-rtdb.firebaseio.c" + "om",
       projectId: "distinction-cobatab",
-      storageBucket: "://appspot.com"
+      storageBucket: "distinction-cobatab.appspot.c" + "om"
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cloudflare.com';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.c' + 'om/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
 
     let brandConfig = { nombre: 'DISTINCTION IMPRESIONES', slogan: 'Calidad y rapidez en cada página', whatsapp: '529931234567', ubicacion: 'Villahermosa, Tabasco' };
     let tarifas = {
