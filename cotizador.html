@@ -249,25 +249,41 @@
       <h2 style="text-align:center; font-size:18px; margin-bottom:6px;">¿Qué desea cotizar?</h2>
       <p style="text-align:center; font-size:13px; color:var(--muted);">Selecciona una opción para calcular tu pedido al instante</p>
 
-      <div class="menu-grid">
-        <div class="menu-card" onclick="openView('viewCobatab')">
-          <span class="menu-icon">📚</span>
+         <div class="menu-grid">
+      <div class="menu-card" onclick="openView('viewCobatab')" style="padding:0; overflow:hidden;">
+        <div id="cardMediaCobatab" style="position:relative; height:115px; background:linear-gradient(135deg,#1e3a8a,#0f172a); display:flex; align-items:center; justify-content:center;">
+          <span style="font-size:38px;">📚</span>
+          <span id="cardBadgeCobatab" style="position:absolute; top:10px; right:10px; background:rgba(37,99,235,0.9); color:#fff; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.4);">Oficial 2027 Actualizadas</span>
+        </div>
+        <div style="padding:14px 16px;">
           <h3>Libros COBATAB</h3>
           <p>Paquetes y materias por semestre, capacitación y serie escolar.</p>
         </div>
+      </div>
 
-        <div class="menu-card" onclick="openView('viewDocsImgs')">
-          <span class="menu-icon">📄</span>
+      <div class="menu-card" onclick="openView('viewDocsImgs')" style="padding:0; overflow:hidden;">
+        <div id="cardMediaDocs" style="position:relative; height:115px; background:linear-gradient(135deg,#0f766e,#0f172a); display:flex; align-items:center; justify-content:center;">
+          <span style="font-size:38px;">📄</span>
+          <span id="cardBadgeDocs" style="position:absolute; top:10px; right:10px; background:rgba(13,148,136,0.9); color:#fff; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.4);">Entrega Express</span>
+        </div>
+        <div style="padding:14px 16px;">
           <h3>Documentos / Imágenes</h3>
           <p>Archivos PDF, tareas, trámites actualizados e impresión de fotos.</p>
         </div>
+      </div>
 
-        <div class="menu-card" onclick="openView('viewStickers')">
-          <span class="menu-icon">🏷️</span>
+      <div class="menu-card" onclick="openView('viewStickers')" style="padding:0; overflow:hidden;">
+        <div id="cardMediaStickers" style="position:relative; height:115px; background:linear-gradient(135deg,#7c3aed,#0f172a); display:flex; align-items:center; justify-content:center;">
+          <span style="font-size:38px;">🏷️</span>
+          <span id="cardBadgeStickers" style="position:absolute; top:10px; right:10px; background:rgba(124,58,237,0.9); color:#fff; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.4);">Acabado Brillante / Mate</span>
+        </div>
+        <div style="padding:14px 16px;">
           <h3>Stickers / Tabloides</h3>
           <p>Etiquetas personalizadas en papel fotográfico o adhesivo con acomodo automático.</p>
         </div>
       </div>
+    </div>
+
 
       <!-- BANNER DESTACADO 4ª SECCIÓN: TRABAJOS EXTENSOS / LIBROS -->
       <div class="banner-extensos" onclick="openView('viewExtensos')">
@@ -279,42 +295,42 @@
       </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- VISTA 1: LIBROS COBATAB                                   -->
-    <!-- ========================================================= -->
-    <div id="viewCobatab" class="view-section">
-      <button class="btn btn-back" onclick="openView('viewHome')">⬅ Volver al Menú Principal</button>
-      <div class="card">
-        <h3>📚 Cotizador de Libros COBATAB</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div>
-            <label>Semestre:</label>
-            <select id="cobSemestre" onchange="renderCobatabBooks()">
-              <option value="1">1er Semestre</option>
-              <option value="2">2do Semestre</option>
-              <option value="3">3er Semestre</option>
-              <option value="4">4to Semestre</option>
-              <option value="5">5to Semestre</option>
-              <option value="6">6to Semestre</option>
-            </select>
-          </div>
-          <div>
-            <label>Grupo (opcional):</label>
-            <input type="text" id="cobGrupo" placeholder="Ej. A, B, C...">
-          </div>
-        </div>
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <button class="btn" style="flex:1;" onclick="toggleAllCobatab(true)">☑️ Marcar Todos</button>
-          <button class="btn" style="flex:1;" onclick="toggleAllCobatab(false)">⬜ Desmarcar</button>
-        </div>
-        <div id="cobBooksList"></div>
-        <div class="total-box">
-          <span>Total Libros Seleccionados:</span>
-          <span class="total-amount" id="cobTotal">$0.00</span>
-        </div>
-        <button class="btn btn-primary" style="width:100%; padding:13px;" onclick="prepareCheckout('COBATAB')">Continuar con mi Pedido ➡️</button>
+     <!-- ========================================================= -->
+  <!-- VISTA 1: LIBROS COBATAB                                   -->
+  <!-- ========================================================= -->
+  <div id="viewCobatab" class="view-section">
+    <button class="btn btn-back" onclick="openView('viewHome')">← Volver al Menú Principal</button>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+        <h3 style="margin:0;">📚 Cotizador de Libros COBATAB</h3>
+        <span id="cobActiveCycleBadge" style="background:rgba(59,130,246,0.18); color:#60a5fa; border:1px solid rgba(59,130,246,0.35); font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px;">Ciclo Activo</span>
       </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div>
+          <label>Semestre:</label>
+          <select id="cobSemestre" onchange="onCobSemestreChange()"></select>
+        </div>
+        <div>
+          <label>Grupo (opcional):</label>
+          <input type="text" id="cobGrupo" placeholder="Ej. A, B, C...">
+        </div>
+      </div>
+      <div style="font-size:11px; color:#94a3b8; margin-bottom:10px;">
+        ✨ Todos los precios ya incluyen <strong>portada a color y engargolado</strong>.
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;">
+        <button id="btnCobFolderBack" class="btn" style="display:none; padding:6px 12px; font-size:12px; background:#1e293b;" onclick="exitCobFolder()">← Regresar</button>
+        <div id="cobFolderBreadcrumb" style="font-size:13px; font-weight:700; color:#38bdf8;"></div>
+      </div>
+      <div id="cobBooksList"></div>
+      <div class="total-box">
+        <span>Total Libros Seleccionados (<span id="cobSelectedCount">0</span>):</span>
+        <span class="total-amount" id="cobTotal">$0.00</span>
+      </div>
+      <button class="btn btn-primary" style="width:100%; padding:13px;" onclick="prepareCheckout('COBATAB')">Continuar con mi Pedido ➡️</button>
     </div>
+  </div>
+
     <!-- ========================================================= -->
     <!-- VISTA 2: DOCUMENTOS / IMÁGENES                            -->
     <!-- ========================================================= -->
@@ -664,7 +680,7 @@
       if (localStorage.getItem('di_client_phone')) document.getElementById('chkClientPhone').value = localStorage.getItem('di_client_phone');
 
          // Cargar Marca al instante desde caché local + sincronizar en vivo con Firebase
-    function renderBrandUI(b) {
+       function renderBrandUI(b) {
       document.getElementById('pubBrandName').textContent = b.nombre;
       document.getElementById('splashTitle').textContent = b.nombre;
       document.getElementById('splashSub').textContent = b.slogan;
@@ -674,7 +690,28 @@
           document.getElementById(id).innerHTML = `<img src="${b.logoUrl}" alt="">`;
         });
       }
+      if (b.badges) {
+        if (b.badges.cobatab) document.getElementById('cardBadgeCobatab').textContent = b.badges.cobatab;
+        if (b.badges.docs) document.getElementById('cardBadgeDocs').textContent = b.badges.docs;
+        if (b.badges.stickers) document.getElementById('cardBadgeStickers').textContent = b.badges.stickers;
+      }
+      if (b.banners) {
+        const setCardImg = (elId, badgeId, imgUrl, emoji) => {
+          const box = document.getElementById(elId);
+          const badgeEl = document.getElementById(badgeId);
+          if (!box || !badgeEl) return;
+          if (imgUrl) {
+            box.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;">` + badgeEl.outerHTML;
+          } else {
+            box.innerHTML = `<span style="font-size:38px;">${emoji}</span>` + badgeEl.outerHTML;
+          }
+        };
+        setCardImg('cardMediaCobatab', 'cardBadgeCobatab', b.banners.cobatab, '📚');
+        setCardImg('cardMediaDocs', 'cardBadgeDocs', b.banners.docs, '📄');
+        setCardImg('cardMediaStickers', 'cardBadgeStickers', b.banners.stickers, '🏷️');
+      }
     }
+
     const cachedBrand = localStorage.getItem('di_brand_cache');
     if (cachedBrand) {
       try { brandConfig = { ...brandConfig, ...JSON.parse(cachedBrand) }; renderBrandUI(brandConfig); } catch(e) {}
@@ -736,42 +773,169 @@
       if (pages <= 650) return { price: tarifas.engargolado.p650, warn: false };
       return { price: 0, warn: true };
     }
-    // =========================================================
-    // 3. SECCIÓN 1: LIBROS COBATAB
-    // =========================================================
+       // ==========================================
+    // 3. SECCIÓN 1: LIBROS COBATAB (CICLOS -01/-02, MINIATURAS Y CARPETAS)
+    // ==========================================
+    let cobCurrentFolder = null;
+    let cobCart = {}; // { [bookId]: { book, modo: 'BN' | 'COLOR' } }
+
+    function initCobatabSelector() {
+      const sel = document.getElementById('cobSemestre');
+      const badge = document.getElementById('cobActiveCycleBadge');
+      if (!sel) return;
+      const keys = Object.keys(catalogCobatab || {}).filter(k => k !== 'activeCycle');
+      const activeCycle = catalogCobatab.activeCycle || keys.sort().reverse().at(0) || '2027-02';
+      if (badge) badge.textContent = `Ciclo ${activeCycle}`;
+
+      const prevSem = sel.value;
+      const sems = activeCycle.endsWith('-01') ? ['2', '4', '6'] : ['1', '3', '5'];
+      const names = { '1': '1er Semestre', '2': '2do Semestre', '3': '3er Semestre', '4': '4to Semestre', '5': '5to Semestre', '6': '6to Semestre' };
+      sel.innerHTML = sems.map(s => `<option value="${s}">${names[s]}</option>`).join('');
+      if (sems.includes(prevSem)) sel.value = prevSem;
+    }
+
+    function onCobSemestreChange() {
+      cobCurrentFolder = null;
+      renderCobatabBooks();
+    }
+
+    function enterCobFolder(folder) {
+      cobCurrentFolder = folder;
+      renderCobatabBooks();
+    }
+
+    function exitCobFolder() {
+      cobCurrentFolder = null;
+      renderCobatabBooks();
+    }
+
+    function toggleCobBook(bookId, modo) {
+      const cycle = catalogCobatab.activeCycle || Object.keys(catalogCobatab || {}).filter(k => k !== 'activeCycle').sort().reverse().at(0);
+      const sem = document.getElementById('cobSemestre').value;
+      const allBooks = (catalogCobatab[cycle] && catalogCobatab[cycle][sem]) ? catalogCobatab[cycle][sem] : [];
+      const bk = allBooks.find(x => x.id === bookId);
+      if (!bk) return;
+
+      if (cobCart[bookId] && cobCart[bookId].modo === modo) {
+        delete cobCart[bookId];
+      } else {
+        cobCart[bookId] = { book: bk, modo };
+      }
+      renderCobatabBooks();
+    }
+
     function renderCobatabBooks() {
+      initCobatabSelector();
       const sem = document.getElementById('cobSemestre').value;
       const box = document.getElementById('cobBooksList');
-      const cycles = Object.keys(catalogCobatab);
-      let books = [];
-      cycles.forEach(c => {
-        if (catalogCobatab[c] && Array.isArray(catalogCobatab[c][sem])) {
-          books = books.concat(catalogCobatab[c][sem]);
+      const backBtn = document.getElementById('btnCobFolderBack');
+      const crumb = document.getElementById('cobFolderBreadcrumb');
+      const cycle = catalogCobatab.activeCycle || Object.keys(catalogCobatab || {}).filter(k => k !== 'activeCycle').sort().reverse().at(0);
+      const allBooks = (catalogCobatab[cycle] && Array.isArray(catalogCobatab[cycle][sem])) ? catalogCobatab[cycle][sem] : [];
+
+      let html = '';
+
+      if (!cobCurrentFolder) {
+        backBtn.style.display = 'none';
+        crumb.textContent = `📚 Materias (${sem}° Semestre)`;
+
+        const troncoBooks = allBooks.filter(b => !b.seccion || b.seccion === 'TRONCO');
+        const capBooks = allBooks.filter(b => b.seccion === 'CAPACITACIONES');
+        const serBooks = allBooks.filter(b => b.seccion === 'SERIES');
+
+        if (['3', '4', '5', '6'].includes(sem)) {
+          html += `<div style="display:grid; grid-template-columns:${['5', '6'].includes(sem) ? '1fr 1fr' : '1fr'}; gap:10px; margin-bottom:14px;">
+            <div onclick="enterCobFolder('CAPACITACIONES')" style="background:linear-gradient(135deg,#1e3a8a,#0f172a); border:1px solid #3b82f6; border-radius:12px; padding:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div style="font-weight:700; font-size:13px; color:#f8fafc;">📂 Capacitaciones</div>
+                <div style="font-size:11px; color:#93c5fd;">${capBooks.length} guía(s)</div>
+              </div>
+              <span style="color:#60a5fa; font-weight:700;">Ver →</span>
+            </div>`;
+          if (['5', '6'].includes(sem)) {
+            html += `
+            <div onclick="enterCobFolder('SERIES')" style="background:linear-gradient(135deg,#4c1d95,#0f172a); border:1px solid #8b5cf6; border-radius:12px; padding:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div style="font-weight:700; font-size:13px; color:#f8fafc;">📂 Series</div>
+                <div style="font-size:11px; color:#c4b5fd;">${serBooks.length} guía(s)</div>
+              </div>
+              <span style="color:#a78bfa; font-weight:700;">Ver →</span>
+            </div>`;
+          }
+          html += `</div>`;
         }
-      });
-      if (!books.length) {
-        box.innerHTML = '<p style="color:var(--muted); font-size:13px; padding:10px;">No hay libros publicados para este semestre aún.</p>';
-        calcCobatabTotal();
-        return;
+
+        if (!troncoBooks.length) {
+          html += `<p style="color:var(--muted); font-size:13px; padding:10px; text-align:center;">No hay materias de tronco común publicadas en este semestre aún.</p>`;
+        } else {
+          html += troncoBooks.map(b => renderCobBookCardClient(b)).join('');
+        }
+      } else {
+        backBtn.style.display = 'inline-flex';
+        const folderName = cobCurrentFolder === 'CAPACITACIONES' ? 'Capacitaciones' : 'Series';
+        crumb.textContent = `${sem}° Semestre › ${folderName}`;
+        const folderBooks = allBooks.filter(b => b.seccion === cobCurrentFolder);
+
+        if (!folderBooks.length) {
+          html += `<p style="color:var(--muted); font-size:13px; padding:10px; text-align:center;">No hay libros publicados en ${folderName} aún.</p>`;
+        } else {
+          const groups = {};
+          folderBooks.forEach(b => {
+            const g = b.grupo || 'General';
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(b);
+          });
+          Object.keys(groups).sort().forEach(gName => {
+            html += `<div style="margin-bottom:14px;">
+              <div style="font-size:12px; font-weight:700; color:#38bdf8; margin-bottom:6px;">📁 ${gName}</div>
+              ${groups[gName].map(b => renderCobBookCardClient(b)).join('')}
+            </div>`;
+          });
+        }
       }
-      box.innerHTML = books.map((b, i) => `
-        <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-card-alt); padding:10px 12px; border-radius:10px; border:1px solid var(--border); margin-bottom:8px; cursor:pointer;">
-          <span style="display:flex; align-items:center; gap:10px; color:var(--text);">
-            <input type="checkbox" class="cob-chk" data-title="${b.titulo}" data-price="${b.precio}" data-pages="${b.paginas || 100}" data-pdf="${b.pdfUrl || ''}" checked onchange="calcCobatabTotal()" style="width:auto; margin:0;">
-            <span><strong>${b.titulo}</strong><br><small style="color:var(--muted);">${b.serie || 'Tronco Común'} • ${b.paginas || 100} págs.</small></span>
-          </span>
-          <strong style="color:#34d399;">$${parseFloat(b.precio).toFixed(2)}</strong>
-        </label>
-      `).join('');
+
+      box.innerHTML = html;
       calcCobatabTotal();
     }
-    function toggleAllCobatab(checked) {
-      document.querySelectorAll('.cob-chk').forEach(c => c.checked = checked);
-      calcCobatabTotal();
+
+    function renderCobBookCardClient(b) {
+      const sel = cobCart[b.id];
+      const isBn = sel && sel.modo === 'BN';
+      const isCol = sel && sel.modo === 'COLOR';
+      const pBn = parseFloat(b.precioBn ?? b.precio ?? 45);
+      const pCol = parseFloat(b.precioColor ?? 95);
+      const thumbHtml = b.thumb
+        ? `<img src="${b.thumb}" style="width:48px; height:64px; object-fit:cover; border-radius:7px; border:1px solid #334155; flex-shrink:0;">`
+        : `<div style="width:48px; height:64px; border-radius:7px; background:#1e293b; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">📘</div>`;
+
+      return `
+        <div style="background:var(--bg-card-alt); border:1px solid ${sel ? '#3b82f6' : 'var(--border)'}; border-radius:12px; padding:10px; margin-bottom:10px; display:flex; gap:10px; align-items:center;">
+          ${thumbHtml}
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:13px; color:var(--text); line-height:1.3;">${b.titulo}</div>
+            <div style="font-size:11px; color:var(--muted); margin:3px 0 7px;">${b.paginas || 100} págs. · Portada color + engargolado</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" onclick="toggleCobBook('${b.id}', 'BN')" style="flex:1; min-width:105px; padding:6px 8px; border-radius:8px; border:1px solid ${isBn ? '#3b82f6' : '#334155'}; background:${isBn ? '#2563eb' : '#0f172a'}; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">
+                ${isBn ? '✓ ' : ''}B/N $${pBn.toFixed(2)}
+              </button>
+              <button type="button" onclick="toggleCobBook('${b.id}', 'COLOR')" style="flex:1; min-width:105px; padding:6px 8px; border-radius:8px; border:1px solid ${isCol ? '#06b6d4' : '#334155'}; background:${isCol ? '#0891b2' : '#0f172a'}; color:#fff; font-size:11px; font-weight:700; cursor:pointer;">
+                ${isCol ? '✓ ' : ''}Color $${pCol.toFixed(2)}
+              </button>
+            </div>
+          </div>
+        </div>`;
     }
+
     function calcCobatabTotal() {
       let sum = 0;
-      document.querySelectorAll('.cob-chk:checked').forEach(c => sum += parseFloat(c.dataset.price) || 0);
+      const entries = Object.values(cobCart);
+      entries.forEach(item => {
+        sum += item.modo === 'COLOR'
+          ? parseFloat(item.book.precioColor ?? 95)
+          : parseFloat(item.book.precioBn ?? item.book.precio ?? 45);
+      });
+      const countEl = document.getElementById('cobSelectedCount');
+      if (countEl) countEl.textContent = entries.length;
       document.getElementById('cobTotal').textContent = `$${sum.toFixed(2)}`;
       return sum;
     }
@@ -1233,17 +1397,26 @@
     }
 
     function prepareCheckout(tipo) {
-      let resumen = '', total = 0, catBandeja = tipo, paginas = 0;
+         let resumen = '', total = 0, catBandeja = tipo, paginas = 0, librosPedido = [];
 
-      if (tipo === 'COBATAB') {
-        const chks = Array.from(document.querySelectorAll('.cob-chk:checked'));
-        if (!chks.length) return alert('Selecciona al menos un libro.');
-        const sem = document.getElementById('cobSemestre').value;
-        const grp = document.getElementById('cobGrupo').value.trim();
-        total = calcCobatabTotal();
-        paginas = chks.reduce((s, c) => s + (parseInt(c.dataset.pages) || 0), 0);
-        resumen = `📚 Libros COBATAB (${sem}° Semestre ${grp ? 'Grupo ' + grp : ''}):\n` + chks.map(c => `• ${c.dataset.title} ($${c.dataset.price})`).join('\n');
-      } else if (tipo === 'DOCUMENTO') {
+    if (tipo === 'COBATAB') {
+      const entries = Object.values(cobCart);
+      if (!entries.length) return alert('Selecciona al menos un libro (B/N o Color).');
+      const sem = document.getElementById('cobSemestre').value;
+      const grp = document.getElementById('cobGrupo').value.trim();
+      total = calcCobatabTotal();
+      paginas = entries.reduce((s, item) => s + (parseInt(item.book.paginas) || 0), 0);
+      librosPedido = entries.map(item => ({
+        titulo: item.book.titulo,
+        modo: item.modo,
+        paginas: parseInt(item.book.paginas) || 100,
+        pdfKey: item.book.pdfKey || '',
+        precio: item.modo === 'COLOR' ? parseFloat(item.book.precioColor ?? 95) : parseFloat(item.book.precioBn ?? item.book.precio ?? 45)
+      }));
+      resumen = `📚 Libros COBATAB (${sem}° Semestre${grp ? ' · Grupo ' + grp : ''}):\n` +
+        librosPedido.map(bk => `• ${bk.titulo} [${bk.modo === 'COLOR' ? 'Todo Color' : 'B/N + Portada Color'}] ($${bk.precio.toFixed(2)})`).join('\n');
+    } else if (tipo === 'DOCUMENTO') {
+
         if (!state.docFile) return alert('Por favor sube tu archivo PDF primero.');
         catBandeja = 'DOCUMENTOS';
         paginas = state.docPages;
@@ -1276,7 +1449,7 @@
         resumen = `📖 Trabajos Extensos / Libros (${paginas} págs. totales):\n` + state.extFiles.map(f => `• ${f.name} (${f.pages} págs.)`).join('\n') + `\n• ${state.extSides} | ${state.extColor} | Engargolado: ${state.extBind}`;
       }
 
-      state.pendingCheckout = { tipo, catBandeja, resumen, total, paginas };
+      state.pendingCheckout = { tipo, catBandeja, resumen, total, paginas, libros: librosPedido };
       document.getElementById('checkoutSummaryBox').textContent = `${resumen}\n\n💰 Total: ${total > 0 ? '$' + total.toFixed(2) + ' MXN' : 'Por cotizar'}`;
       document.getElementById('checkoutAnticipoWarn').style.display = (total >= (tarifas.operacion.minAnticipo || 150)) ? 'block' : 'none';
       openView('viewCheckout');
@@ -1319,6 +1492,7 @@
       };
 
       const payload = {
+        libros: ck.libros || [],
         folio,
         cliente: nombre,
         telefono: phone,

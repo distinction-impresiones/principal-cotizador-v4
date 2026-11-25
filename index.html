@@ -10,6 +10,7 @@
       'cdnjs.cloudflare.c' + 'om/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
       'cdnjs.cloudflare.c' + 'om/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
       'unpkg.c' + 'om/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+  'cdnjs.cloudflare.c' + 'om/ajax/libs/pdf.js/3.11.174/pdf.min.js',
       'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-app-compat.js',
       'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-database-compat.js',
       'www.gstatic.c' + 'om/firebasejs/9.22.2/firebase-storage-compat.js'
@@ -293,52 +294,135 @@
     </div>
 
     <!-- PESTAÑA 3: CATÁLOGO Y VÍNCULOS PDF -->
-    <div id="tabCat" class="tab-content">
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title">📚 Gestión de Catálogo COBATAB por Ciclo Escolar</div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-            <select id="cycleSelect" onchange="renderCatalog()" style="width:auto;">
-              <option value="2027-02">Ciclo 2027-02 (Nones: 1°, 3°, 5°)</option>
-              <option value="2027-01">Ciclo 2027-01 (Pares: 2°, 4°, 6°)</option>
-            </select>
-            <button class="btn btn-sm" onclick="addNewCycle()">➕ Nuevo Ciclo</button>
-            <label class="btn btn-success btn-sm" style="margin:0; cursor:pointer;">
-              📊 Importar Excel (.xlsx)
-              <input type="file" accept=".xlsx,.xls" style="display:none;" onchange="importExcelCatalog(event)">
-            </label>
-            <button class="btn btn-primary btn-sm" onclick="saveCatalogToFirebase()">☁️ Publicar al Cotizador</button>
-          </div>
+  <div id="tabCat" class="tab-content">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📚 Gestión de Catálogo COBATAB por Ciclo Escolar</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+          <select id="cycleSelect" onchange="onCycleChange()" style="width:auto; font-weight:700;">
+            <option value="2027-02">Ciclo 2027-02 (Nones: 1°, 3°, 5°)</option>
+            <option value="2027-01">Ciclo 2027-01 (Pares: 2°, 4°, 6°)</option>
+          </select>
+          <button class="btn btn-sm" onclick="toggleNewCycleBar()">➕ Nuevo Ciclo</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCurrentCycle()" title="Eliminar ciclo seleccionado">🗑️</button>
+          <label class="btn btn-success btn-sm" style="margin:0; cursor:pointer;">
+            📊 Excel (.xlsx)
+            <input type="file" accept=".xlsx,.xls" style="display:none;" onchange="importExcelCatalog(event)">
+          </label>
+          <button class="btn btn-primary btn-sm" onclick="saveCatalogToFirebase()">📢 Publicar al Cotizador</button>
         </div>
+      </div>
 
-        <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;" id="semesterTabs">
-          <button class="btn btn-primary btn-sm" onclick="selectSemester('1', this)">1er Semestre</button>
-          <button class="btn btn-sm" onclick="selectSemester('2', this)">2do Semestre</button>
-          <button class="btn btn-sm" onclick="selectSemester('3', this)">3er Semestre</button>
-          <button class="btn btn-sm" onclick="selectSemester('4', this)">4to Semestre</button>
-          <button class="btn btn-sm" onclick="selectSemester('5', this)">5to Semestre</button>
-          <button class="btn btn-sm" onclick="selectSemester('6', this)">6to Semestre</button>
+      <!-- BARRA INTEGRADA PARA CREAR NUEVO CICLO (SIN PROMPT) -->
+      <div id="newCycleBar" style="display:none; background:rgba(15,23,42,0.85); border:1px solid #334155; border-radius:12px; padding:12px; margin-bottom:14px; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Año</label>
+          <select id="ncYear" style="width:95px; padding:6px 8px;">
+            <option value="2026">2026</option>
+            <option value="2027" selected>2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+          </select>
         </div>
+        <div>
+          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Terminación / Semestres</label>
+          <select id="ncTerm" style="width:210px; padding:6px 8px;">
+            <option value="02">-02 (Nones: 1°, 3°, 5° Sem.)</option>
+            <option value="01">-01 (Pares: 2°, 4°, 6° Sem.)</option>
+          </select>
+        </div>
+        <div style="flex:1; min-width:150px;">
+          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Nombre opcional (ej. Ago-Ene)</label>
+          <input type="text" id="ncLabel" placeholder="Opcional..." style="padding:6px 10px;">
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="confirmCreateCycle()">✅ Crear Ciclo</button>
+          <button class="btn btn-sm" onclick="toggleNewCycleBar(false)">Cancelar</button>
+        </div>
+      </div>
 
-        <div class="two-col">
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <!-- PESTAÑAS DINÁMICAS DE SEMESTRES SEGÚN CICLO (-01 O -02) -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;" id="semesterTabs"></div>
+
+      <div class="two-col">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button id="btnCatBack" class="btn btn-sm" style="display:none; background:#1e293b;" onclick="exitCatFolder()">← Regresar</button>
               <strong id="semHeaderTitle">Libros cargados (0)</strong>
-              <button class="btn btn-sm" onclick="openAddBookModal()">➕ Agregar Libro Manual</button>
             </div>
-            <div id="booksListContainer" style="max-height:520px; overflow-y:auto;"></div>
+            <button class="btn btn-primary btn-sm" onclick="openBookForm()">➕ Agregar Libro</button>
           </div>
 
-          <div style="background:var(--bg-card-alt); border:1px dashed var(--border-color); border-radius:12px; padding:14px; display:flex; flex-direction:column; min-height:460px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-              <strong style="font-size:13px;">👁️ Visor de Cotejo PDF</strong>
-              <span class="badge" id="pdfPreviewLabel">Ningún archivo en revisión</span>
+          <!-- FORMULARIO RÁPIDO AGREGAR / EDITAR LIBRO (LADO A LADO CON VISOR) -->
+          <div id="inlineBookForm" style="display:none; background:#0f172a; border:1px solid #3b82f6; border-radius:12px; padding:12px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong id="bookFormTitle" style="font-size:13px; color:#60a5fa;">Nuevo Libro</strong>
+              <button class="btn btn-sm" style="padding:2px 8px;" onclick="closeBookForm()">✕</button>
             </div>
-            <iframe id="pdfPreviewFrame" style="width:100%; flex:1; border:none; border-radius:8px; background:#0f172a; min-height:400px;"></iframe>
+            <input type="hidden" id="editBookId">
+            <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+              <div>
+                <label style="font-size:11px; color:#94a3b8;">1. Selecciona PDF de tu PC (abre Visor, cuenta páginas y crea portada)</label>
+                <input type="file" id="bfPdfInput" accept=".pdf" onchange="handleLocalPdfSelect(event)" style="font-size:12px; padding:6px;">
+                <div id="bfPdfStatus" style="font-size:11px; color:#38bdf8; margin-top:3px;"></div>
+              </div>
+              <div id="bfGroupWrap" style="display:none;">
+                <label id="bfGroupLabel" style="font-size:11px; color:#94a3b8;">Nombre de Capacitación o Serie</label>
+                <input type="text" id="bfGroup" list="groupSuggestions" placeholder="Ej. Informática, Contabilidad, Físico-Matemático...">
+                <datalist id="groupSuggestions">
+                  <option value="Informática">
+                  <option value="Contabilidad">
+                  <option value="Administración">
+                  <option value="Dibujo Arquitectónico">
+                  <option value="Higiene y Salud">
+                  <option value="Turismo">
+                  <option value="Físico-Matemático">
+                  <option value="Químico-Biológico">
+                  <option value="Económico-Administrativo">
+                  <option value="Humanidades y Ciencias Sociales">
+                </datalist>
+              </div>
+              <div>
+                <label style="font-size:11px; color:#94a3b8;">2. Nombre exacto del Libro (tal como lo verá el alumno)</label>
+                <input type="text" id="bfTitle" placeholder="Ej. Matemáticas III - Guía Didáctica">
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                <div>
+                  <label style="font-size:11px; color:#94a3b8;">Páginas</label>
+                  <input type="number" id="bfPages" value="100" min="1">
+                </div>
+                <div>
+                  <label style="font-size:11px; color:#94a3b8;">Precio B/N ($)</label>
+                  <input type="number" id="bfPriceBn" value="45" step="0.5">
+                </div>
+                <div>
+                  <label style="font-size:11px; color:#94a3b8;">Precio Color ($)</label>
+                  <input type="number" id="bfPriceColor" value="95" step="0.5">
+                </div>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+                <button class="btn btn-sm" onclick="closeBookForm()">Cancelar</button>
+                <button class="btn btn-success btn-sm" onclick="saveBookEntry()">✅ Guardar y Cotejar Libro</button>
+              </div>
+            </div>
           </div>
+
+          <div id="booksListContainer"></div>
+        </div>
+
+        <!-- VISOR DE COTEJO PDF LOCAL -->
+        <div style="background:#020617; border:1px solid #1e293b; border-radius:12px; padding:10px; display:flex; flex-direction:column; min-height:460px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #1e293b; padding-bottom:6px;">
+            <span style="font-size:12px; font-weight:700; color:#94a3b8;">👁️ Visor de Cotejo PDF (Local PC)</span>
+            <span id="pdfPreviewLabel" style="font-size:11px; color:#38bdf8; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Ningún PDF cargado</span>
+          </div>
+          <iframe id="pdfPreviewFrame" style="width:100%; flex:1; border:none; border-radius:8px; background:#0f172a; min-height:410px;"></iframe>
         </div>
       </div>
     </div>
+  </div>
+
 
     <!-- PESTAÑA 4: HISTORIAL Y CORTE DE CAJA -->
     <div id="tabCaja" class="tab-content">
@@ -382,8 +466,40 @@
             <div><label>WhatsApp de Recepción (con lada, ej. 529931234567):</label><input type="text" id="cfgWhatsapp" placeholder="529931234567"></div>
             <div><label>Ubicación del Taller:</label><input type="text" id="cfgLocation" value="Villahermosa, Tabasco"></div>
             <button class="btn btn-primary" style="justify-content:center;" onclick="saveBrandConfig()">💾 Guardar y Publicar al Cotizador</button>
+                    <hr style="border-color:var(--border-color); margin:8px 0;">
+          <div style="font-weight:700; font-size:13px; color:#38bdf8;">🖼️ Aparador de Tarjetas en Cotizador (Imágenes Reales e Insignias)</div>
+          <div style="display:grid; gap:10px;">
+            <div style="background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <strong style="font-size:12px;">1. Tarjeta Libros COBATAB</strong>
+                <button class="btn btn-sm" style="padding:2px 8px; font-size:11px;" onclick="clearCardBanner('cobatab')">Restaurar icono</button>
+              </div>
+              <input type="file" accept="image/*" onchange="uploadCardBanner(event, 'cobatab')" style="font-size:11px; margin-bottom:6px;">
+              <input type="text" id="badgeCobatab" value="Oficial 2027 Actualizadas" placeholder="Etiqueta flotante (ej. Oficial 2027 Actualizadas)" style="font-size:12px; padding:6px 8px;">
+              <div id="prevBannerCobatab" style="margin-top:6px;"></div>
+            </div>
+
+            <div style="background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <strong style="font-size:12px;">2. Tarjeta Documentos / Imágenes</strong>
+                <button class="btn btn-sm" style="padding:2px 8px; font-size:11px;" onclick="clearCardBanner('docs')">Restaurar icono</button>
+              </div>
+              <input type="file" accept="image/*" onchange="uploadCardBanner(event, 'docs')" style="font-size:11px; margin-bottom:6px;">
+              <input type="text" id="badgeDocs" value="Entrega Express" placeholder="Etiqueta flotante (ej. Entrega Express)" style="font-size:12px; padding:6px 8px;">
+              <div id="prevBannerDocs" style="margin-top:6px;"></div>
+            </div>
+
+            <div style="background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <strong style="font-size:12px;">3. Tarjeta Stickers / Tabloides</strong>
+                <button class="btn btn-sm" style="padding:2px 8px; font-size:11px;" onclick="clearCardBanner('stickers')">Restaurar icono</button>
+              </div>
+              <input type="file" accept="image/*" onchange="uploadCardBanner(event, 'stickers')" style="font-size:11px; margin-bottom:6px;">
+              <input type="text" id="badgeStickers" value="Acabado Brillante / Mate" placeholder="Etiqueta flotante (ej. Acabado Brillante / Mate)" style="font-size:12px; padding:6px 8px;">
+              <div id="prevBannerStickers" style="margin-top:6px;"></div>
+            </div>
           </div>
-        </div>
+</div>
 
         <div class="panel">
           <div class="panel-header"><div class="panel-title">📱 Código QR GitHub Pages y Respaldo</div></div>
@@ -405,7 +521,8 @@
         </div>
       </div>
     </div>
-    <!-- PESTAÑA 6: TARIFAS Y SERVICIOS (NUEVA ETAPA 4) -->
+   
+ <!-- PESTAÑA 6: TARIFAS Y SERVICIOS (NUEVA ETAPA 4) -->
     <div id="tabTarifas" class="tab-content">
       <div class="panel">
         <div class="panel-header">
@@ -755,73 +872,118 @@
         return;
       }
 
-      box.innerHTML = list.map(p => {
-        const hasPdf = Boolean(p.pdfUrl);
-        const isBook = p.categoria === 'COBATAB' || p.categoria === 'EXTENSO' || (p.paginas && p.paginas >= 10);
-        const selloBtns = (hasPdf && isBook) ? `
-          <button class="btn btn-sm ${p.portadaLista ? 'btn-success' : 'btn-warning'}" onclick="splitSelloDistinction('${p._key}', 'PORTADA')">
-            ${p.portadaLista ? '✅ Portada Color Lista' : '🎨 1. Portada Color (Págs. 1-2)'}
-          </button>
-          <button class="btn btn-sm ${p.interiorListo ? 'btn-success' : 'btn-primary'}" onclick="splitSelloDistinction('${p._key}', 'INTERIOR')">
-            ${p.interiorListo ? '✅ Interior B&N Listo' : '⚫ 2. Interior B&N (Págs. 3-Fin)'}
-          </button>` : (hasPdf ? `<a href="${p.pdfUrl}" target="_blank" class="btn btn-purple btn-sm">📥 Abrir PDF</a>` : '');
+          box.innerHTML = list.map(p => {
+      const booksArr = Array.isArray(p.libros) && p.libros.length
+        ? p.libros
+        : ((p.pdfKey || p.pdfUrl) ? [{ titulo: p.resumen || 'Libro', pdfKey: p.pdfKey || '', pdfUrl: p.pdfUrl || '', modo: p.modo || 'BN', paginas: p.paginas || 0 }] : []);
 
-        const lotesBtn = (hasPdf && (p.paginas || 0) > 400) ? `<button class="btn btn-sm" onclick="splitInBatches('${p._key}')">✂️ Dividir en Lotes</button>` : '';
-
-        return `
-          <div class="order-card ${p.urgencia === 'URGENTE' ? 'urgent' : ''}">
-            <div class="order-header">
-              <div>
-                <strong>${p.folio || '#DI-TALLER'} — ${p.cliente || 'Mostrador'}</strong>
-                <span class="badge" style="margin-left:6px;">${p.categoria || 'TALLER'}</span>
-                ${p.pagado ? '<span class="badge badge-online">💵 PAGADO</span>' : '<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;">⏳ POR COBRAR</span>'}
-              </div>
-              <strong>$${(parseFloat(p.total) || 0).toFixed(2)}</strong>
-            </div>
-            <p style="font-size:13px; color:var(--text-muted); white-space:pre-line;">${p.resumen || ''}</p>
-            <div class="order-actions">
-              ${selloBtns}
-              ${lotesBtn}
-              ${p.estado === 'EN_PROCESO' ? `<button class="btn btn-success btn-sm" onclick="markOrderReady('${p._key}')">✔️ Marcar Listo</button>` : ''}
-              <button class="btn btn-primary btn-sm" onclick="deliverOrder('${p._key}')">🤝 Entregar ${p.pagado ? '' : 'y Cobrar'}</button>
-            </div>
-          </div>`;
-      }).join('');
-    }
-    async function splitSelloDistinction(key, part) {
-      const item = productionQueue.find(p => p._key === key);
-      if (!item || !item.pdfUrl) return;
-      try {
-        const res = await fetch(item.pdfUrl);
-        const bytes = await res.arrayBuffer();
-        const srcDoc = await PDFLib.PDFDocument.load(bytes);
-        const totalPages = srcDoc.getPageCount();
-        const outDoc = await PDFLib.PDFDocument.create();
-
-        if (part === 'PORTADA') {
-          const indices = totalPages >= 2 ? new Array(0, 1) : new Array(0);
-          const pages = await outDoc.copyPages(srcDoc, indices);
-          pages.forEach(pg => outDoc.addPage(pg));
-          const pdfBytes = await outDoc.save();
-          downloadBlob(pdfBytes, `${item.folio || 'Libro'}_1_PORTADA_COLOR.pdf`);
-          db.ref(`produccion/${key}/portadaLista`).set(true);
-        } else {
-          if (totalPages <= 2) {
-            alert('Este archivo solo tiene 2 páginas o menos (ya salieron en la portada).');
-            return;
+      let booksPrintHtml = '';
+      if (booksArr.length) {
+        booksPrintHtml = booksArr.map((bk, idx) => {
+          const isColor = String(bk.modo || '').toUpperCase().includes('COLOR');
+          if (isColor) {
+            return `<button class="btn btn-purple btn-sm" onclick="printLocalBookAction('${p._key}', ${idx}, 'FULL')">🖨️ Imprimir Color: ${bk.titulo}</button>`;
           }
-          const indices = Array.from({ length: totalPages - 2 }, (_, i) => i + 2);
-          const pages = await outDoc.copyPages(srcDoc, indices);
-          pages.forEach(pg => outDoc.addPage(pg));
-          const pdfBytes = await outDoc.save();
-          downloadBlob(pdfBytes, `${item.folio || 'Libro'}_2_INTERIOR_BN.pdf`);
-          db.ref(`produccion/${key}/interiorListo`).set(true);
-        }
-      } catch (err) {
-        alert('⚠️ No se pudo procesar automáticamente el PDF externo. Abriendo archivo original...');
-        window.open(item.pdfUrl, '_blank');
+          return `
+            <div style="display:inline-flex; flex-wrap:wrap; gap:4px; align-items:center; background:rgba(15,23,42,0.75); padding:4px 8px; border-radius:8px; border:1px solid #334155;">
+              <span style="font-size:11px; color:#cbd5e1; font-weight:600; margin-right:4px;">📘 ${bk.titulo}:</span>
+              <button class="btn btn-warning btn-sm" onclick="printLocalBookAction('${p._key}', ${idx}, 'PORTADA')">1. Portada Color (1-2)</button>
+              <button class="btn btn-primary btn-sm" onclick="printLocalBookAction('${p._key}', ${idx}, 'INTERIOR')">2. Interior B/N (3-Fin)</button>
+            </div>`;
+        }).join('');
+      } else if (p.pdfUrl) {
+        booksPrintHtml = `<a href="${p.pdfUrl}" target="_blank" class="btn btn-purple btn-sm">📄 Abrir PDF</a>`;
       }
+
+      const printerSelectHtml = `
+        <select id="prSel_${p._key}" style="width:auto; padding:4px 8px; font-size:11px; background:#0f172a; border:1px solid #334155; border-radius:6px; color:#f8fafc;">
+          <option value="HP PageWide Pro 477">🖨️ HP PageWide Pro 477</option>
+          <option value="HP OfficeJet Pro X476 #1">🖨️ HP OfficeJet Pro X476 #1</option>
+          <option value="HP OfficeJet Pro X476 #2">🖨️ HP OfficeJet Pro X476 #2</option>
+          <option value="Epson L3250">🖨️ Epson L3250</option>
+        </select>`;
+
+      return `
+        <div class="order-card ${p.urgencia === 'URGENTE' ? 'urgent' : ''}">
+          <div class="order-header">
+            <div>
+              <strong>${p.folio || '#DI-TALLER'} - ${p.cliente || 'Mostrador'}</strong>
+              <span class="badge" style="margin-left:6px;">${p.categoria || 'TALLER'}</span>
+              ${p.pagado ? '<span class="badge badge-online">💵 PAGADO</span>' : '<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;">⏳ POR COBRAR</span>'}
+            </div>
+            <strong>$${(parseFloat(p.total) || 0).toFixed(2)}</strong>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); white-space:pre-line;">${p.resumen || ''}</p>
+          <div class="order-actions" style="align-items:center;">
+            ${printerSelectHtml}
+            ${booksPrintHtml}
+            ${p.estado === 'EN_PROCESO' ? `<button class="btn btn-success btn-sm" onclick="markOrderReady('${p._key}')">✔️ Marcar Listo</button>` : ''}
+            <button class="btn btn-primary btn-sm" onclick="deliverOrder('${p._key}')">🤝 Entregar ${p.pagado ? '' : 'y Cobrar'}</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  async function printLocalBookAction(orderKey, bookIdx, part) {
+    const item = productionQueue.find(p => p._key === orderKey);
+    if (!item) return;
+    const booksArr = Array.isArray(item.libros) && item.libros.length
+      ? item.libros
+      : [{ titulo: item.resumen || 'Libro', pdfKey: item.pdfKey || '', pdfUrl: item.pdfUrl || '', paginas: item.paginas || 0 }];
+    const bk = booksArr[bookIdx];
+    if (!bk) return;
+
+    const printerName = document.getElementById('prSel_' + orderKey)?.value || 'Impresora Taller';
+
+    try {
+      let bytes = null;
+      if (bk.pdfKey) {
+        const localFile = await getPdfFromIDB(bk.pdfKey);
+        if (!localFile) return alert(`⚠️ El archivo "${bk.titulo}" no está en la memoria local de este navegador. Vincúlalo en Catálogo COBATAB primero.`);
+        bytes = await localFile.arrayBuffer();
+      } else if (bk.pdfUrl) {
+        const res = await fetch(bk.pdfUrl);
+        bytes = await res.arrayBuffer();
+      } else {
+        return alert('⚠️ Este trabajo no tiene un PDF local vinculado.');
+      }
+
+      const srcDoc = await PDFLib.PDFDocument.load(bytes);
+      const totalPages = srcDoc.getPageCount();
+      let finalBytes = bytes;
+      let printedPages = totalPages;
+
+      if (part === 'PORTADA') {
+        const outDoc = await PDFLib.PDFDocument.create();
+        const indices = totalPages >= 2 ? [0, 1] : [0];
+        const pages = await outDoc.copyPages(srcDoc, indices);
+        pages.forEach(pg => outDoc.addPage(pg));
+        finalBytes = await outDoc.save();
+        printedPages = indices.length;
+      } else if (part === 'INTERIOR') {
+        if (totalPages <= 2) return alert('Este archivo solo tiene 2 páginas o menos (ya salieron en la portada).');
+        const outDoc = await PDFLib.PDFDocument.create();
+        const indices = Array.from({ length: totalPages - 2 }, (_, i) => i + 2);
+        const pages = await outDoc.copyPages(srcDoc, indices);
+        pages.forEach(pg => outDoc.addPage(pg));
+        finalBytes = await outDoc.save();
+        printedPages = indices.length;
+      }
+
+      const blob = new Blob([finalBytes], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      const printWin = window.open(blobUrl, '_blank');
+      if (printWin) {
+        printWin.addEventListener('load', () => {
+          setTimeout(() => { try { printWin.print(); } catch(e) {} }, 450);
+        });
+      }
+
+      db.ref('impresoras_stats/' + printerName.replace(/[#.\s]/g, '_')).transaction(curr => (curr || 0) + printedPages);
+    } catch (err) {
+      alert('❌ No se pudo preparar el PDF para imprimir: ' + err.message);
     }
+  }
+
 
     async function splitInBatches(key) {
       const item = productionQueue.find(p => p._key === key);
@@ -874,114 +1036,446 @@
       });
     }
 
-    // =========================================================
-    // 6. CATÁLOGO COBATAB + SUBIDA PDF A FIREBASE STORAGE
-    // =========================================================
-    function selectSemester(sem, btn) {
-      currentSemester = sem;
-      document.querySelectorAll('#semesterTabs .btn').forEach(b => b.classList.remove('btn-primary'));
-      if (btn) btn.classList.add('btn-primary');
-      renderCatalog();
+     // ==========================================
+  // 6. CATÁLOGO COBATAB PRO + MOTOR LOCAL INDEXEDDB + MINIATURAS
+  // ==========================================
+   if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.c' + 'om/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  let currentCatFolder = null;
+  let pendingPdfData = { pdfKey: '', pdfName: '', thumb: '', pages: 0 };
+
+  function openBooksIDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('DistinctionLibrosDB', 1);
+      req.onupgradeneeded = e => {
+        const dbLocal = e.target.result;
+        if (!dbLocal.objectStoreNames.contains('pdfs')) dbLocal.createObjectStore('pdfs');
+      };
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+
+  async function savePdfToIDB(key, fileOrBlob) {
+    const dbLocal = await openBooksIDB();
+    return new Promise((resolve, reject) => {
+      const tx = dbLocal.transaction('pdfs', 'readwrite');
+      tx.objectStore('pdfs').put(fileOrBlob, key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = e => reject(e.target.error);
+    });
+  }
+
+  async function getPdfFromIDB(key) {
+    const dbLocal = await openBooksIDB();
+    return new Promise((resolve, reject) => {
+      const tx = dbLocal.transaction('pdfs', 'readonly');
+      const req = tx.objectStore('pdfs').get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+
+  function getCycleSemesters(cycleCode) {
+    const clean = String(cycleCode || '').trim();
+    if (clean.endsWith('-01')) return ['2', '4', '6'];
+    return ['1', '3', '5'];
+  }
+
+  function syncCycleSelectorOptions() {
+    const sel = document.getElementById('cycleSelect');
+    if (!sel) return;
+    const prev = sel.value;
+    const keys = Object.keys(catalogData || {}).filter(k => k !== 'activeCycle');
+    if (keys.length) {
+      sel.innerHTML = keys.sort().reverse().map(k => {
+        const label = (catalogData[k] && catalogData[k]._label) ? ` (${catalogData[k]._label})` : (k.endsWith('-01') ? ' (Pares: 2°, 4°, 6°)' : ' (Nones: 1°, 3°, 5°)');
+        return `<option value="${k}">Ciclo ${k}${label}</option>`;
+      }).join('');
+      if (keys.includes(prev)) sel.value = prev;
+      else if (catalogData.activeCycle && keys.includes(catalogData.activeCycle)) sel.value = catalogData.activeCycle;
     }
-    function addNewCycle() {
-      const c = prompt('Nombre del nuevo ciclo (ej. 2028-01):');
-      if (!c) return;
-      const sel = document.getElementById('cycleSelect');
-      const opt = document.createElement('option');
-      opt.value = c.trim(); opt.textContent = `Ciclo ${c.trim()}`;
-      sel.appendChild(opt); sel.value = c.trim();
-      renderCatalog();
+  }
+
+  function onCycleChange() {
+    currentCatFolder = null;
+    closeBookForm();
+    const sel = document.getElementById('cycleSelect');
+    const sems = getCycleSemesters(sel.value);
+    if (!sems.includes(String(currentSemester))) currentSemester = sems.at(0);
+    renderSemesterTabs();
+    renderCatalog();
+  }
+
+  function renderSemesterTabs() {
+    const sel = document.getElementById('cycleSelect');
+    if (!sel) return;
+    const sems = getCycleSemesters(sel.value);
+    if (!sems.includes(String(currentSemester))) currentSemester = sems.at(0);
+    const names = { '1': '1er Semestre', '2': '2do Semestre', '3': '3er Semestre', '4': '4to Semestre', '5': '5to Semestre', '6': '6to Semestre' };
+    document.getElementById('semesterTabs').innerHTML = sems.map(s => `
+      <button class="btn ${String(currentSemester) === s ? 'btn-primary' : ''} btn-sm" onclick="selectSemester('${s}')">${names[s]}</button>
+    `).join('');
+  }
+
+  function selectSemester(sem) {
+    currentSemester = String(sem);
+    currentCatFolder = null;
+    closeBookForm();
+    renderSemesterTabs();
+    renderCatalog();
+  }
+
+  function toggleNewCycleBar(force) {
+    const bar = document.getElementById('newCycleBar');
+    const show = typeof force === 'boolean' ? force : bar.style.display === 'none';
+    bar.style.display = show ? 'flex' : 'none';
+  }
+
+  function confirmCreateCycle() {
+    const yr = document.getElementById('ncYear').value;
+    const term = document.getElementById('ncTerm').value;
+    const extra = document.getElementById('ncLabel').value.trim();
+    const code = `${yr}-${term}`;
+    if (!catalogData[code]) catalogData[code] = {};
+    if (extra) catalogData[code]._label = extra;
+    syncCycleSelectorOptions();
+    document.getElementById('cycleSelect').value = code;
+    document.getElementById('ncLabel').value = '';
+    toggleNewCycleBar(false);
+    onCycleChange();
+  }
+
+  function deleteCurrentCycle() {
+    const sel = document.getElementById('cycleSelect');
+    const code = sel.value;
+    if (!code) return;
+    if (!confirm(`¿Seguro que deseas eliminar por completo el Ciclo ${code} y todos sus libros?`)) return;
+    delete catalogData[code];
+    if (catalogData.activeCycle === code) delete catalogData.activeCycle;
+    if (sel.options.length > 1) {
+      sel.remove(sel.selectedIndex);
+    } else {
+      sel.innerHTML = `<option value="2027-02">Ciclo 2027-02 (Nones: 1°, 3°, 5°)</option><option value="2027-01">Ciclo 2027-01 (Pares: 2°, 4°, 6°)</option>`;
     }
-    function openAddBookModal() { document.getElementById('bookModal').style.display = 'flex'; }
-    function confirmAddBook() {
+    onCycleChange();
+  }
+  function enterCatFolder(folder) {
+    currentCatFolder = folder;
+    closeBookForm();
+    renderCatalog();
+  }
+
+  function exitCatFolder() {
+    currentCatFolder = null;
+    closeBookForm();
+    renderCatalog();
+  }
+
+  function openBookForm(bookId = null) {
+    const form = document.getElementById('inlineBookForm');
+    form.style.display = 'block';
+    const grpWrap = document.getElementById('bfGroupWrap');
+    const grpLabel = document.getElementById('bfGroupLabel');
+    if (currentCatFolder === 'CAPACITACIONES') {
+      grpWrap.style.display = 'block';
+      grpLabel.textContent = 'Nombre de la Capacitación (ej. Informática, Contabilidad...)';
+    } else if (currentCatFolder === 'SERIES') {
+      grpWrap.style.display = 'block';
+      grpLabel.textContent = 'Nombre de la Serie (ej. Físico-Matemático, Químico-Biológico...)';
+    } else {
+      grpWrap.style.display = 'none';
+    }
+
+    document.getElementById('bfPdfInput').value = '';
+    if (bookId) {
       const cycle = document.getElementById('cycleSelect').value;
-      const title = document.getElementById('mBookTitle').value.trim();
-      if (!title) return;
-      if (!catalogData[cycle]) catalogData[cycle] = {};
-      if (!catalogData[cycle][currentSemester]) catalogData[cycle][currentSemester] = [];
-      catalogData[cycle][currentSemester].push({
-        id: 'bk_' + Date.now(),
-        titulo: title,
-        serie: document.getElementById('mBookSeries').value.trim() || 'Tronco Común',
-        paginas: parseInt(document.getElementById('mBookPages').value) || 100,
-        precio: parseFloat(document.getElementById('mBookPrice').value) || 40,
-        pdfUrl: ''
-      });
-      closeModal('bookModal');
-      renderCatalog();
+      const b = (catalogData[cycle]?.[currentSemester] || []).find(x => x.id === bookId);
+      if (!b) return;
+      document.getElementById('bookFormTitle').textContent = '✏️ Editar Libro';
+      document.getElementById('editBookId').value = b.id;
+      document.getElementById('bfTitle').value = b.titulo || '';
+      document.getElementById('bfGroup').value = b.grupo || '';
+      document.getElementById('bfPages').value = b.paginas || 100;
+      document.getElementById('bfPriceBn').value = b.precioBn ?? b.precio ?? 45;
+      document.getElementById('bfPriceColor').value = b.precioColor ?? 95;
+      pendingPdfData = { pdfKey: b.pdfKey || '', pdfName: b.pdfName || '', thumb: b.thumb || '', pages: b.paginas || 100 };
+      document.getElementById('bfPdfStatus').textContent = b.pdfName ? `✅ Vinculado: ${b.pdfName}` : '⚠️ Sin PDF vinculado aún';
+      if (b.pdfKey) previewLocalBook(b.pdfKey, b.titulo);
+    } else {
+      document.getElementById('bookFormTitle').textContent = '➕ Nuevo Libro';
+      document.getElementById('editBookId').value = '';
+      document.getElementById('bfTitle').value = '';
+      document.getElementById('bfGroup').value = '';
+      document.getElementById('bfPages').value = 100;
+      document.getElementById('bfPriceBn').value = 45;
+      document.getElementById('bfPriceColor').value = 95;
+      pendingPdfData = { pdfKey: '', pdfName: '', thumb: '', pages: 0 };
+      document.getElementById('bfPdfStatus').textContent = '';
     }
-    function renderCatalog() {
-      const cycle = document.getElementById('cycleSelect').value;
-      const books = (catalogData[cycle] && catalogData[cycle][currentSemester]) || [];
-      document.getElementById('semHeaderTitle').textContent = `Libros cargados en ${currentSemester}° Semestre (${books.length})`;
-      const box = document.getElementById('booksListContainer');
-      if (!books.length) {
-        box.innerHTML = '<p style="color:var(--text-muted); font-size:13px; padding:16px;">Sin libros en este semestre. Importa Excel o agrega manualmente.</p>';
-        return;
+  }
+
+  function closeBookForm() {
+    const form = document.getElementById('inlineBookForm');
+    if (form) form.style.display = 'none';
+  }
+
+  async function handleLocalPdfSelect(e) {
+    const file = e.target.files.item(0);
+    if (!file) return;
+    const statusEl = document.getElementById('bfPdfStatus');
+    statusEl.textContent = '⏳ Cargando en Visor, contando páginas y creando miniatura...';
+
+    const blobUrl = URL.createObjectURL(file);
+    document.getElementById('pdfPreviewLabel').textContent = file.name;
+    document.getElementById('pdfPreviewFrame').src = blobUrl;
+
+    const pdfKey = 'pdf_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    await savePdfToIDB(pdfKey, file);
+
+    let numPages = parseInt(document.getElementById('bfPages').value) || 100;
+    let thumbDataUrl = '';
+
+    try {
+      if (window.pdfjsLib) {
+        const arrayBuf = await file.arrayBuffer();
+        const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+        numPages = pdfDoc.numPages;
+        document.getElementById('bfPages').value = numPages;
+
+        const page = await pdfDoc.getPage(1);
+        const viewport = page.getViewport({ scale: 0.35 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        thumbDataUrl = canvas.toDataURL('image/jpeg', 0.72);
       }
-      box.innerHTML = books.map((b, idx) => `
-        <div class="printer-card" style="margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong>${b.titulo}</strong>
-            <span class="badge">$${b.precio} • ${b.paginas} págs.</span>
+    } catch (err) {
+      console.warn('No se pudo extraer portada automática:', err);
+    }
+
+    if (!document.getElementById('bfTitle').value.trim()) {
+      document.getElementById('bfTitle').value = file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ');
+    }
+
+    pendingPdfData = { pdfKey, pdfName: file.name, thumb: thumbDataUrl, pages: numPages };
+    statusEl.textContent = `✅ Cotejado: ${file.name} (${numPages} págs. · Portada lista)`;
+  }
+
+  function saveBookEntry() {
+    const cycle = document.getElementById('cycleSelect').value;
+    const title = document.getElementById('bfTitle').value.trim();
+    if (!title) return alert('Escribe el nombre exacto del libro.');
+
+    const seccion = currentCatFolder || 'TRONCO';
+    const grupo = (seccion !== 'TRONCO') ? (document.getElementById('bfGroup').value.trim() || 'General') : 'Tronco Común';
+    const paginas = parseInt(document.getElementById('bfPages').value) || 100;
+    const precioBn = parseFloat(document.getElementById('bfPriceBn').value) || 45;
+    const precioColor = parseFloat(document.getElementById('bfPriceColor').value) || 95;
+    const editId = document.getElementById('editBookId').value;
+
+    if (!catalogData[cycle]) catalogData[cycle] = {};
+    if (!catalogData[cycle][currentSemester]) catalogData[cycle][currentSemester] = [];
+
+    const bookObj = {
+      id: editId || ('bk_' + Date.now()),
+      titulo: title,
+      seccion,
+      grupo,
+      paginas,
+      precioBn,
+      precioColor,
+      pdfKey: pendingPdfData.pdfKey || '',
+      pdfName: pendingPdfData.pdfName || '',
+      thumb: pendingPdfData.thumb || '',
+      verificado: Boolean(pendingPdfData.pdfKey)
+    };
+
+    if (editId) {
+      const idx = catalogData[cycle][currentSemester].findIndex(x => x.id === editId);
+      if (idx !== -1) catalogData[cycle][currentSemester][idx] = bookObj;
+    } else {
+      catalogData[cycle][currentSemester].push(bookObj);
+    }
+
+    closeBookForm();
+    renderCatalog();
+  }
+  async function previewLocalBook(pdfKey, title) {
+    const file = await getPdfFromIDB(pdfKey);
+    if (!file) return alert('⚠️ Este PDF no está guardado en la memoria local de este navegador. Edita el libro y vuelve a vincular el PDF de tu PC.');
+    const url = URL.createObjectURL(file);
+    document.getElementById('pdfPreviewLabel').textContent = title;
+    document.getElementById('pdfPreviewFrame').src = url;
+  }
+
+  function deleteBookById(bookId) {
+    const cycle = document.getElementById('cycleSelect').value;
+    if (!confirm('¿Eliminar este libro del catálogo?')) return;
+    catalogData[cycle][currentSemester] = (catalogData[cycle][currentSemester] || []).filter(b => b.id !== bookId);
+    renderCatalog();
+  }
+
+  function renderCatalog() {
+    renderSemesterTabs();
+    const cycle = document.getElementById('cycleSelect').value;
+    const sem = String(currentSemester);
+    const allBooks = (catalogData[cycle] && catalogData[cycle][sem]) ? catalogData[cycle][sem] : [];
+    const box = document.getElementById('booksListContainer');
+    const backBtn = document.getElementById('btnCatBack');
+    const headerTitle = document.getElementById('semHeaderTitle');
+
+    let html = '';
+
+    if (!currentCatFolder) {
+      backBtn.style.display = 'none';
+      const troncoBooks = allBooks.filter(b => !b.seccion || b.seccion === 'TRONCO');
+      const capBooks = allBooks.filter(b => b.seccion === 'CAPACITACIONES');
+      const serBooks = allBooks.filter(b => b.seccion === 'SERIES');
+      headerTitle.textContent = `${sem}° Semestre · Tronco Común (${troncoBooks.length})`;
+
+      if (['3', '4', '5', '6'].includes(sem)) {
+        html += `<div style="display:grid; grid-template-columns:${['5', '6'].includes(sem) ? '1fr 1fr' : '1fr'}; gap:10px; margin-bottom:14px;">
+          <div onclick="enterCatFolder('CAPACITACIONES')" style="background:linear-gradient(135deg,#1e293b,#0f172a); border:1px solid #3b82f6; border-radius:12px; padding:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-weight:700; font-size:14px; color:#f8fafc;">📂 Capacitaciones</div>
+              <div style="font-size:11px; color:#94a3b8;">${capBooks.length} libro(s) cargado(s)</div>
+            </div>
+            <span style="color:#60a5fa; font-weight:700;">Abrir →</span>
+          </div>`;
+        if (['5', '6'].includes(sem)) {
+          html += `
+          <div onclick="enterCatFolder('SERIES')" style="background:linear-gradient(135deg,#1e293b,#0f172a); border:1px solid #8b5cf6; border-radius:12px; padding:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-weight:700; font-size:14px; color:#f8fafc;">📂 Series</div>
+              <div style="font-size:11px; color:#94a3b8;">${serBooks.length} libro(s) cargado(s)</div>
+            </div>
+            <span style="color:#a78bfa; font-weight:700;">Abrir →</span>
+          </div>`;
+        }
+        html += `</div>`;
+      }
+
+      if (!troncoBooks.length) {
+        html += `<p style="color:var(--text-muted); font-size:13px; padding:16px; text-align:center;">Sin materias de Tronco Común en ${sem}° Semestre. Pulsa "➕ Agregar Libro".</p>`;
+      } else {
+        html += troncoBooks.map(b => renderBookAdminCard(b)).join('');
+      }
+    } else {
+      backBtn.style.display = 'inline-flex';
+      const folderBooks = allBooks.filter(b => b.seccion === currentCatFolder);
+      const folderName = currentCatFolder === 'CAPACITACIONES' ? 'Capacitaciones' : 'Series';
+      headerTitle.textContent = `${sem}° Semestre › ${folderName} (${folderBooks.length})`;
+
+      if (!folderBooks.length) {
+        html += `<p style="color:var(--text-muted); font-size:13px; padding:16px; text-align:center;">Aún no hay libros en ${folderName}. Pulsa "➕ Agregar Libro" para cargar uno.</p>`;
+      } else {
+        const groups = {};
+        folderBooks.forEach(b => {
+          const g = b.grupo || 'General';
+          if (!groups[g]) groups[g] = [];
+          groups[g].push(b);
+        });
+        Object.keys(groups).sort().forEach(gName => {
+          html += `<div style="margin-bottom:14px;">
+            <div style="font-size:12px; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; padding-left:4px;">📁 ${gName} (${groups[gName].length})</div>
+            ${groups[gName].map(b => renderBookAdminCard(b)).join('')}
+          </div>`;
+        });
+      }
+    }
+
+    box.innerHTML = html;
+  }
+
+  function renderBookAdminCard(b) {
+    const thumbHtml = b.thumb
+      ? `<img src="${b.thumb}" style="width:44px; height:58px; object-fit:cover; border-radius:6px; border:1px solid #334155; flex-shrink:0;">`
+      : `<div style="width:44px; height:58px; border-radius:6px; background:#1e293b; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">📘</div>`;
+
+    return `
+      <div class="printer-card" style="margin-bottom:10px; display:flex; gap:10px; align-items:flex-start;">
+        ${thumbHtml}
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+            <strong style="font-size:13px; line-height:1.3;">${b.titulo}</strong>
+            <span class="badge" style="white-space:nowrap;">${b.paginas} págs.</span>
           </div>
-          <p style="font-size:11px; color:var(--text-muted); margin:4px 0 8px;">Serie: ${b.serie || 'General'}</p>
+          <div style="font-size:11px; color:#94a3b8; margin:4px 0 6px;">
+            B/N: <strong style="color:#f8fafc;">$${b.precioBn ?? b.precio}</strong> · Color: <strong style="color:#38bdf8;">$${b.precioColor ?? '-'}</strong>
+            ${b.pdfName ? ` · <span style="color:#4ade80;">✅ ${b.pdfName}</span>` : ` · <span style="color:#fbbf24;">⚠️ Sin PDF local</span>`}
+          </div>
           <div style="display:flex; flex-wrap:wrap; gap:6px;">
-            <label class="btn btn-primary btn-sm" style="margin:0; cursor:pointer;">
-              📤 Subir PDF a Nube
-              <input type="file" accept=".pdf" style="display:none;" onchange="uploadBookPdf(event, ${idx})">
-            </label>
-            ${b.pdfUrl ? `<button class="btn btn-success btn-sm" onclick="previewBookPdf('${b.pdfUrl}', '${b.titulo}')">👁️ Cotejar PDF</button>` : '<span class="badge" style="color:#fbbf24;">Sin PDF</span>'}
-            <button class="btn btn-danger btn-sm" onclick="catalogData['${cycle}']['${currentSemester}'].splice(${idx},1); renderCatalog()">🗑️</button>
+            ${b.pdfKey ? `<button class="btn btn-success btn-sm" onclick="previewLocalBook('${b.pdfKey}', '${b.titulo.replace(/'/g, "\\'")}')">👁️ Cotejar</button>` : ''}
+            <button class="btn btn-sm" onclick="openBookForm('${b.id}')">✏️ Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteBookById('${b.id}')">🗑️</button>
           </div>
         </div>
-      `).join('');
-    }
-    function uploadBookPdf(e, idx) {
-      const file = e.target.files[0];
-      if (!file) return;
+      </div>
+    `;
+  }
+
+  function importExcelCatalog(e) {
+    const file = e.target.files.item(0);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const wb = XLSX.read(ev.target.result, { type: 'binary' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.at(0)]);
       const cycle = document.getElementById('cycleSelect').value;
-      const ref = storage.ref(`catalogo_pdf/${cycle}/${currentSemester}/${Date.now()}_${file.name}`);
-      ref.put(file).then(snap => snap.ref.getDownloadURL()).then(url => {
-        catalogData[cycle][currentSemester][idx].pdfUrl = url;
-        renderCatalog();
-        previewBookPdf(url, file.name);
-        alert('✅ PDF subido a Firebase Storage. Recuerda pulsar "Publicar al Cotizador".');
-      });
-    }
-    function previewBookPdf(url, label) {
-      document.getElementById('pdfPreviewLabel').textContent = label;
-      document.getElementById('pdfPreviewFrame').src = url;
-    }
-    function importExcelCatalog(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const wb = XLSX.read(ev.target.result, { type: 'binary' });
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.at(0)]);
-        const cycle = document.getElementById('cycleSelect').value;
-        if (!catalogData[cycle]) catalogData[cycle] = {};
-        rows.forEach(r => {
-          const sem = String(r.Semestre || r.semestre || currentSemester).replace(/\D/g, '') || '1';
-          if (!catalogData[cycle][sem]) catalogData[cycle][sem] = [];
-          catalogData[cycle][sem].push({
-            id: 'bk_' + Math.random().toString(36).slice(2, 8),
-            titulo: r.Libro || r.Titulo || r.Materia || 'Libro',
-            serie: r.Serie || r.Capacitacion || 'Tronco Común',
-            paginas: parseInt(r.Paginas || 100),
-            precio: parseFloat(r.Precio || 40),
-            pdfUrl: r.PDF || ''
-          });
+      if (!catalogData[cycle]) catalogData[cycle] = {};
+      rows.forEach(r => {
+        const sem = String(r.Semestre || r.semestre || currentSemester).replace(/\D/g, '') || '1';
+        if (!catalogData[cycle][sem]) catalogData[cycle][sem] = [];
+        const rawSec = String(r.Seccion || r.seccion || '').toUpperCase();
+        const seccion = rawSec.includes('CAP') ? 'CAPACITACIONES' : (rawSec.includes('SER') ? 'SERIES' : 'TRONCO');
+        catalogData[cycle][sem].push({
+          id: 'bk_' + Math.random().toString(36).slice(2, 8),
+          titulo: r.Libro || r.Titulo || r.Materia || 'Libro',
+          seccion,
+          grupo: r.Grupo || r.Capacitacion || r.Serie || 'Tronco Común',
+          paginas: parseInt(r.Paginas || 100),
+          precioBn: parseFloat(r.PrecioBN || r.Precio || 45),
+          precioColor: parseFloat(r.PrecioColor || 95),
+          pdfKey: '', pdfName: '', thumb: '', verificado: false
         });
-        renderCatalog();
-        alert(`✅ ${rows.length} libros importados desde Excel.`);
-      };
-      reader.readAsBinaryString(file);
+      });
+      renderCatalog();
+      alert(`✅ ${rows.length} libros importados desde Excel. Ahora vincula el PDF de cada uno para verificarlos.`);
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  function saveCatalogToFirebase() {
+    const cycle = document.getElementById('cycleSelect').value;
+    const sems = getCycleSemesters(cycle);
+    const verifiedCycle = {};
+    let totalVerified = 0;
+
+    sems.forEach(s => {
+      const list = (catalogData[cycle]?.[s] || []).filter(b => b.verificado && b.pdfKey);
+      verifiedCycle[s] = list;
+      totalVerified += list.length;
+    });
+
+    if (totalVerified === 0) {
+      return alert('⚠️ No hay libros verificados con PDF vinculado en este ciclo para publicar. Vincula al menos un PDF primero.');
     }
-    function saveCatalogToFirebase() {
-      db.ref('catalogo_cobatab').set(catalogData).then(() => alert('☁️ Catálogo publicado en vivo al Cotizador.'));
-    }
+
+    catalogData.activeCycle = cycle;
+    const payloadToPublish = {
+      activeCycle: cycle,
+      [cycle]: verifiedCycle
+    };
+
+    db.ref('catalogo_cobatab').set(payloadToPublish)
+      .then(() => alert(`📢 ¡Ciclo ${cycle} publicado al Cotizador con ${totalVerified} libro(s) verificado(s)!`))
+      .catch(err => alert('❌ Error al publicar: ' + err.message));
+  }
+
 
     // =========================================================
       // =========================================================
@@ -1051,19 +1545,70 @@
         document.getElementById(id).innerHTML = `<img src="${url}" alt="Logo">`;
       });
     }
-    function saveBrandConfig() {
-      const cfg = {
-        nombre: document.getElementById('cfgBrandName').value,
-        slogan: document.getElementById('cfgSlogan').value,
-        whatsapp: document.getElementById('cfgWhatsapp').value,
-        ubicacion: document.getElementById('cfgLocation').value
+     let cardBannersCache = { cobatab: '', docs: '', stickers: '' };
+
+  function uploadCardBanner(e, key) {
+    const file = e.target.files.item(0);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 540;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+        cardBannersCache[key] = dataUrl;
+        renderCardBannerPreviews();
+        db.ref('config_marca/banners/' + key).set(dataUrl)
+          .then(() => alert('✅ Imagen de tarjeta actualizada y publicada.'))
+          .catch(err => alert('❌ Error: ' + err.message));
       };
-      db.ref('config_marca').update(cfg).then(() => {
-        document.getElementById('headerBrandName').textContent = cfg.nombre;
-        document.getElementById('headerSlogan').textContent = `${cfg.slogan} • ${cfg.ubicacion}`;
-        alert('✅ Identidad publicada al Cotizador.');
-      });
-    }
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearCardBanner(key) {
+    cardBannersCache[key] = '';
+    renderCardBannerPreviews();
+    db.ref('config_marca/banners/' + key).set('')
+      .then(() => alert('🔄 Se restauró el icono original de la tarjeta.'));
+  }
+
+  function renderCardBannerPreviews() {
+    const map = { cobatab: 'prevBannerCobatab', docs: 'prevBannerDocs', stickers: 'prevBannerStickers' };
+    Object.keys(map).forEach(k => {
+      const el = document.getElementById(map[k]);
+      if (!el) return;
+      el.innerHTML = cardBannersCache[k]
+        ? `<img src="${cardBannersCache[k]}" style="width:100%; height:72px; object-fit:cover; border-radius:8px; border:1px solid #334155;">`
+        : `<span style="font-size:11px; color:#64748b;">Usando icono predeterminado</span>`;
+    });
+  }
+
+  function saveBrandConfig() {
+    const cfg = {
+      nombre: document.getElementById('cfgBrandName').value,
+      slogan: document.getElementById('cfgSlogan').value,
+      whatsapp: document.getElementById('cfgWhatsapp').value,
+      ubicacion: document.getElementById('cfgLocation').value,
+      badges: {
+        cobatab: document.getElementById('badgeCobatab').value.trim(),
+        docs: document.getElementById('badgeDocs').value.trim(),
+        stickers: document.getElementById('badgeStickers').value.trim()
+      }
+    };
+    db.ref('config_marca').update(cfg).then(() => {
+      document.getElementById('headerBrandName').textContent = cfg.nombre;
+      document.getElementById('headerSlogan').textContent = `${cfg.slogan} • ${cfg.ubicacion}`;
+      alert('✅ Identidad e insignias publicadas al Cotizador.');
+    });
+  }
+
     function generateQR() {
       const url = document.getElementById('qrUrlInput').value.trim();
       if (!url) return alert('Pega el enlace de GitHub Pages primero.');
